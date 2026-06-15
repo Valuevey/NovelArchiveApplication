@@ -814,9 +814,17 @@ public class BookShelfPage{
             //[A] 해당 소설 폴더 안의 실제 텍스트 파일 총 개수(분모) 파악
             File dir = new File(novel.getFolderPath());
             if (dir.exists() && dir.isDirectory()) {
-                File[] files = dir.listFiles((d, name) -> name.toLowerCase().endsWith(".txt") && !name.equals("bookmark.txt"));
+                File[] files = dir.listFiles((d, name) -> {
+                    String lower = name.toLowerCase();
+                    return lower.endsWith(".txt")
+                            && !lower.equals("bookmark.txt")
+                            && !lower.equals("memo_bookmarks.txt")
+                            && !lower.startsWith("summary_notes");
+                });
                 if (files != null) totalCh = files.length;
             }
+
+
 
             //[B] bookmark.txt 파일 분석을 통한 현재 열람 회차 파악
             File bookmarkFile = new File(novel.getFolderPath() + File.separator + "bookmark.txt");
@@ -1731,7 +1739,13 @@ public class BookShelfPage{
 
                     File dir = new File(novel.getFolderPath());
                     if(dir.exists() && dir.isDirectory()){
-                        File[] files = dir.listFiles((d, name) -> name.toLowerCase().endsWith(".txt") && !name.equals("bookmark.txt"));
+                        File[] files = dir.listFiles((d, name) -> {
+                            String lower = name.toLowerCase();
+                            return lower.endsWith(".txt")
+                                    && !lower.equals("bookmark.txt")
+                                    && !lower.equals("memo_bookmarks.txt")
+                                    && !lower.startsWith("summary_notes");
+                        });
                         if(files != null) totalCh = files.length;
                     }
 
@@ -2056,7 +2070,13 @@ public class BookShelfPage{
         //실제 폴더 스캔 파일 개수 파악
         File dir = new File(novel.getFolderPath());
         if(dir.exists() && dir.isDirectory()){
-            File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(".txt") && !name.equals("bookmark.txt"));
+            File[] files = dir.listFiles((dir1, name) -> {
+                String lower = name.toLowerCase();
+                return lower.endsWith(".txt")
+                        && !lower.equals("bookmark.txt")
+                        && !lower.equals("memo_bookmarks.txt")
+                        && !lower.startsWith("summary_notes");
+            });
             if(files != null) totalCh = files.length;
         }
 

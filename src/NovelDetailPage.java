@@ -715,7 +715,7 @@ public class NovelDetailPage {
                 btnBookmarkToggle.setText("전체 회차 보기");
                 btnBookmarkToggle.setForeground(new Color(0, 140, 140));
                 btnSortToggle.setForeground(new Color(180, 140, 140));
-                btnSortToggle.setEnabled(false);    //책갈피 모드에선 회차 정렬 버튼 일시 잠금
+                btnSortToggle.setEnabled(true);    //책갈피 모드에서 회차 정렬 버튼 사용 가능
             } else{
                 btnBookmarkToggle.setText("책갈피 보기");
                 btnBookmarkToggle.setForeground(new Color(140, 145, 155));
@@ -815,9 +815,15 @@ public class NovelDetailPage {
     private void readChapterFiles(){
         txtFiles.clear();   //데이터 비우기
         File dir = new File(currentNovel.getFolderPath());
+
         if(dir.exists() && dir.isDirectory()){
-            File[] files = dir.listFiles((dir1, name) ->
-                    name.toLowerCase().endsWith(".txt") && !name.equals("bookmark.txt") && !name.equals("memo_bookmarks.txt"));
+            File[] files = dir.listFiles((dir1, name) -> {
+                String lowerName = name.toLowerCase();
+                return lowerName.endsWith(".txt")
+                        && !lowerName.equals("bookmark.txt")
+                        && !lowerName.equals("memo_bookmarks.txt")
+                        && !lowerName.startsWith("summary_notes");  //메모장 파일 스캔 원천 차단
+            });
             if(files != null){
                 for(File f : files){
                     txtFiles.add(f);
@@ -903,40 +909,91 @@ public class NovelDetailPage {
                 lblEmpty.setForeground(Color.GRAY);
                 chapterListPanel.add(lblEmpty);
             } else{
+                //메모 목록을 메모리에 수집한 뒤 회차 정렬 필터(isSortAscending)에 맞게 재정렬하는 엔진
+                java.util.List<String[]> bookmarkLines = new java.util.ArrayList<>();
                 try(BufferedReader br = new BufferedReader(new FileReader(memoFile))){
                     String line;
                     while ((line = br.readLine()) != null) {
                         String[] split = line.split("\\|", -1);
                         if(split.length >= 2){
-                            String chNumStr = split[0];
-                            String memoText = split[1];
-
-                            JPanel row = new JPanel(new BorderLayout());
-                            row.setBackground(new Color(250, 252, 255));
-                            row.setMaximumSize(new Dimension(500, 50));
-                            row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 235, 245)));
-
-                            //좌측 영역: 회차 번호 및 유저가 입력한 최대 40자의 한줄 요약 메모 인쇄
-                            JLabel lblMemo = new JLabel("<html><body style='width: 300px;'><b>[" + chNumStr + "화]</b> " + memoText + "</body></html>");
-                            lblMemo.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
-                            lblMemo.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-
-                            JButton btnRead = new JButton("보기");
-                            btnRead.setFocusPainted(false);
-                            final int targetch = Integer.parseInt(chNumStr);
-                            btnRead.addActionListener(e -> {
-                                NovelViewerPage viewer = new NovelViewerPage();
-                                viewer.openViewer(currentNovel.getFolderPath(), targetch, this, currentNovel);
-                            });
-
-                            row.add(lblMemo, BorderLayout.CENTER);
-                            row.add(btnRead, BorderLayout.EAST);
-                            chapterListPanel.add(row);
-                            chapterListPanel.add(Box.createVerticalStrut(4));
-                        }
+                            bookmarkLines.add(split);}
                     }
                 } catch(Exception ex){
                     System.out.println("메모장 로드 실패: " + ex.getMessage());
+                }
+
+                //수집된 책갈피 컬렉션을 현재 활성화된 순방향/역방향 정렬 조건 스위치 변수에 의거하여 소팅 연산
+                Collections.sort(bookmarkLines, (b1, b2) -> {
+                    try{
+                        int num1 = Integer.parseInt(b1[0].trim());
+                        int num2 = Integer.parseInt(b2[0].trim());
+                        return isSortAscending ? Integer.compare(num1, num2) : Integer.compare(num2, num1);
+                    } catch(Exception e){
+                        return b1[0].compareTo(b2[0]);
+                    }
+                });
+
+                for(String[] split : bookmarkLines){
+                    String chNumStr = split[0];
+                    String memoText = split[1].trim();
+
+                    JPanel row = new JPanel(new BorderLayout());
+                    row.setBackground(Color.WHITE);
+                    row.setMaximumSize(new Dimension(500, 38));
+                    row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(242, 244, 246)));
+
+                    //좌측 텍스트 그룹(회차 번호, 메모, 배지)을 수평 정렬선상에 얹기 위한 FlowLayout 컴포넌트
+                    JPanel leftTitleGroup = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 4));
+                    leftTitleGroup.setBackground(Color.WHITE);
+
+                    //메모가 비어있을 때, "저장된 메모가 없습니다" 문구가 노출되도록 동적 가드 연산 처리
+                    String finalShowText = memoText.isEmpty() ? "저장된 메모가 없습니다" : memoText;
+
+                    //좌측 영역: 회차 번호 및 유저가 입력한 최대 40자의 한줄 요약 메모 인쇄
+                    JLabel lblMemo = new JLabel("[" + chNumStr + "화] " + finalShowText);
+                    //메모가 진짜 등록된 데이터인지 가짜 대체재 문구인지에 따라 글자 색상을 변환
+                    if(memoText.isEmpty()){
+                        lblMemo.setFont(new Font("맑은 고딕", Font.ITALIC, 13));    //ITALIC : 기울임
+                        lblMemo.setForeground(Color.LIGHT_GRAY);    //흐린 회색
+                    } else{
+                        lblMemo.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+                        lblMemo.setForeground(new Color(60, 65, 70));   //본문 잉크색 지정
+                    }
+
+                    //메모와 제목 위에 마우스 올리면 손모양으로 변환
+                    lblMemo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    lblMemo.setToolTipText("클릭하면 이 책갈피 회차로 즉시 이동합니다.");
+
+                    final int targetch = Integer.parseInt(chNumStr);
+
+                    MouseAdapter allInOneLinkEngine = new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            NovelViewerPage viewer = new NovelViewerPage();
+                            viewer.openViewer(currentNovel.getFolderPath(), targetch, NovelDetailPage.this, currentNovel);
+                        }
+                    };
+                    lblMemo.addMouseListener(allInOneLinkEngine);
+                    leftTitleGroup.add(lblMemo);
+
+                    JButton btnRead = new JButton("보기");
+                    btnRead.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+                    btnRead.setFocusPainted(false);
+                    btnRead.setBorderPainted(false);
+                    btnRead.setContentAreaFilled(false);
+                    btnRead.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    btnRead.setForeground(new Color(0, 140, 140));
+                    btnRead.setMargin(new Insets(2, 8, 2, 8));
+
+                    btnRead.addActionListener(e -> {
+                        NovelViewerPage viewer = new NovelViewerPage();
+                        viewer.openViewer(currentNovel.getFolderPath(), targetch, this, currentNovel);
+                    });
+
+                    row.add(leftTitleGroup, BorderLayout.CENTER);
+                    row.add(btnRead, BorderLayout.EAST);
+                    chapterListPanel.add(row);
+                    chapterListPanel.add(Box.createVerticalStrut(2));
                 }
             }
         }
