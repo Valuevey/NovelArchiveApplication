@@ -128,6 +128,9 @@ src
 
 <br>
 <img width="1339" height="905" alt="보관함 디자인 스케치" src="https://github.com/user-attachments/assets/d8565735-aece-4584-a57d-8d0360ca1b74" />
+<img width="810" height="1068" alt="상세 정보창 디자인 스케치" src="https://github.com/user-attachments/assets/012d8003-b29f-4885-8fa7-8fbe614ec802" />
+<img width="1545" height="1054" alt="뷰어 디자인 스케치" src="https://github.com/user-attachments/assets/811a230c-5101-4ccf-989a-5bb714def94b" />
+<img width="1388" height="1321" alt="플랫폼 삭제창 디자인 스케치" src="https://github.com/user-attachments/assets/feb38ca0-5758-4a57-9ffd-19c321f063a9" />
+<img width="1480" height="1817" alt="새 소설 추가_플랫폼 버튼 디자인 스케치" src="https://github.com/user-attachments/assets/eee0cd1b-857a-42dc-85de-79b9a635eeaf" />
 
-- **기획 의도**: 자바 Swing의 투박한 기본 컴포넌트 구조를 탈피하고, 웹 기반 소설 플랫폼처럼 사용자가 표지와 회차 목록을 직관적으로 인지할 수 있는 레이아웃을 최초로 구상하였습니다.
 </details>
