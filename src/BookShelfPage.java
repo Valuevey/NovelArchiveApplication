@@ -42,12 +42,20 @@ public class BookShelfPage{
         try{
             File baseDir = new File("C:\\novel");
             File iconDir = new File("C:\\novel\\icon");
+            File novelsDir = new File("C:\\novel\\novels");
+            File coversDir = new File("C:\\novel\\covers");
 
             if(!baseDir.exists()){
                 baseDir.mkdirs();       //C 드라이브에 novel 폴더가 없으면 자동 생성
             }
             if(!iconDir.exists()){
                 iconDir.mkdirs();       // novel 폴더에 로고 아이콘용 icon 폴더가 없으면 자동 생성
+            }
+            if (!novelsDir.exists()){
+                novelsDir.mkdirs();
+            }
+            if (!coversDir.exists()){
+                coversDir.mkdirs();
             }
         } catch(Exception e){
             System.out.println("디렉터리 선행 생성 실패: "+ e.getMessage());

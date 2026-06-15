@@ -671,18 +671,18 @@ public class AddNovelDialog extends JDialog {
 
         // 파일/폴더 선택 이벤트 연결
         btnSelectFolder.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);    //폴더 선택만 가능하게 세팅
+            JFileChooser chooser = new JFileChooser("C:\\novel\\novels");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);   // 폴더 선택만 가능하게 세팅
             int result = chooser.showOpenDialog(this);
-            if(result == JFileChooser.APPROVE_OPTION){
+            if (result == JFileChooser.APPROVE_OPTION) {
                 tfFolderPath.setText(chooser.getSelectedFile().getAbsolutePath());
             }
         });
 
         btnSelectCover.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
+            JFileChooser chooser = new JFileChooser("C:\\novel\\covers");
             int result = chooser.showOpenDialog(this);
-            if(result == JFileChooser.APPROVE_OPTION){
+            if (result == JFileChooser.APPROVE_OPTION) {
                 tfCoverPath.setText(chooser.getSelectedFile().getAbsolutePath());
             }
         });
