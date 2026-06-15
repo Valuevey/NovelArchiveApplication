@@ -1,4 +1,4 @@
-<img width="694" height="603" alt="image" src="https://github.com/user-attachments/assets/3210a9fb-f1a5-46a2-9184-f31cf0d9bf34" /># 📚 소설 개인 보관함 프로그램 (Novel Bookshelf)
+# 📚 소설 개인 보관함 프로그램 (Novel Bookshelf)
 
 ## 📖 프로젝트 소개
 
@@ -104,7 +104,7 @@ src
 유저가 직접 등록하고 사용하는 플랫폼 리스트 보존 및 설정 데이터 연동
 
 ### 1. 메인 서재 보관함 화면
-> <img width="851" height="482" alt="image" src="https://github.com/user-attachments/assets/8affb593-a3dc-426e-b21e-36e3f2061948" />
+
 
 사용자가 등록한 소설 카드들이 플랫하게 나열되며 완결 배지 및 플랫폼 로고가 정밀 도킹 출력됩니다.
 
