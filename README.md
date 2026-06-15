@@ -18,6 +18,7 @@ src
 ├── AddNovelDialog.java
 ├── AppSettings.java
 └── Novel.java
+```text
 
 
 ### Main.java
