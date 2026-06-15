@@ -23,11 +23,11 @@ src
 ├── kakao.png          # 카카오페이지 플랫폼 로고 이미지
 └── series.png         # 네이버 시리즈 플랫폼 로고 이미지
 
-###Main.java
+### Main.java
 메인 화면 실행
 BookshelfPage 객체 생성 및 초기화
 
-###BookShelfPage.java
+### BookShelfPage.java
 메인 서재 화면을 담당
 - 소설 목록 표시
 - 검색, 필터링, 정렬 기능
