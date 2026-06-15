@@ -104,10 +104,31 @@ src
 유저가 직접 등록하고 사용하는 플랫폼 리스트 보존 및 설정 데이터 연동
 
 ---
+# 📸실행화
 
-### 1. 메인 서재 보관함 화면
-<img width="851" height="482" alt="image" src="https://github.com/user-attachments/assets/ab10f966-290b-4cc0-b634-14867776ec82" width="400" alt="메인 서재 화면"/>
+## 1. 메인 서재 보관함 화면
+<img width="851" height="482" alt="image" src="https://github.com/user-attachments/assets/179ef302-e26b-45dc-b401-b83443c71651" />
+
+### 2. 새 소설 추가 창
+<img width="447" height="518" alt="image" src="https://github.com/user-attachments/assets/8c357b8f-4c0a-4fa9-ad92-f18ec68cb902" />
+
+### 3. 소설 상세 정보창
+<img width="388" height="557" alt="image" src="https://github.com/user-attachments/assets/f8e97abb-0b64-489e-b4c3-5534628d68e8" />
+
+---
+# 💡 초기 기획 및 UI 디자인 프로세스
+
+### ✏️ 1. 초기 제작 목표 및 기획
 
 
-사용자가 등록한 소설 카드들이 플랫하게 나열되며 완결 배지 및 플랫폼 로고가 정밀 도킹 출력됩니다.
+### 📐 2. 초기 UI 화면 스케치
 
+<details>
+<summary>🔍 여기를 클릭하면 기획 스케치 그림이 펼쳐집니다.</summary>
+
+<br>
+<img src="<img width="810" height="1068" alt="Screenshot_20260604_004645_Samsung Notes" src="https://github.com/user-attachments/assets/f0c60697-64f9-48a5-97a2-515fa02e282c" />
+" width="450" alt="초기 디자인 기획안">
+
+- **기획 의도**: 자바 Swing의 투박한 기본 컴포넌트 구조를 탈피하고, 웹 기반 소설 플랫폼처럼 사용자가 표지와 회차 목록을 직관적으로 인지할 수 있는 레이아웃을 최초로 구상하였습니다.
+</details>
