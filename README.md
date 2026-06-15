@@ -127,8 +127,7 @@ src
 <summary>🔍 여기를 클릭하면 기획 스케치 그림이 펼쳐집니다.</summary>
 
 <br>
-<img src="<img width="810" height="1068" alt="Screenshot_20260604_004645_Samsung Notes" src="https://github.com/user-attachments/assets/f0c60697-64f9-48a5-97a2-515fa02e282c" />
-" width="450" alt="초기 디자인 기획안">
+<img width="1339" height="905" alt="보관함 디자인 스케치" src="https://github.com/user-attachments/assets/d8565735-aece-4584-a57d-8d0360ca1b74" />
 
 - **기획 의도**: 자바 Swing의 투박한 기본 컴포넌트 구조를 탈피하고, 웹 기반 소설 플랫폼처럼 사용자가 표지와 회차 목록을 직관적으로 인지할 수 있는 레이아웃을 최초로 구상하였습니다.
 </details>
