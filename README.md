@@ -271,3 +271,9 @@ src
 <img width="1480" height="1817" alt="새 소설 추가_플랫폼 버튼 디자인 스케치" src="https://github.com/user-attachments/assets/eee0cd1b-857a-42dc-85de-79b9a635eeaf" />
 
 </details>
+
+--
+
+👨‍💻제작자
+
+Valuevey
