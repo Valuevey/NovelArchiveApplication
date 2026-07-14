@@ -1,6 +1,6 @@
 import javax.swing.*;
+import javax.swing.text.LayeredHighlighter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
@@ -62,6 +62,33 @@ public class NovelViewerPage{
             new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
     private javax.swing.text.DefaultHighlighter.DefaultHighlightPainter currentPainter =
             new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(new Color(255, 150, 0)); // 강조용 주황색
+
+    // 형광펜 기능 관련 변수
+    private javax.swing.text.DefaultHighlighter.DefaultHighlightPainter yellowHighlightPainter =
+            new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(new Color(255, 255, 153, 150)); // 반투명 노란색
+    private javax.swing.text.DefaultHighlighter.DefaultHighlightPainter greenHighlightPainter =
+            new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(new Color(153, 255, 153, 150)); // 반투명 초록색
+
+    // 밑줄 기능 전용 커스텀 페인터
+    private javax.swing.text.Highlighter.HighlightPainter underlinePainter = new javax.swing.text.LayeredHighlighter.LayerPainter() {
+        @Override
+        public void paint(Graphics g, int p0, int p1, Shape bounds, javax.swing.text.JTextComponent c){}
+
+        @Override
+        public Shape paintLayer(Graphics g, int offs0, int offs1, Shape bounds, javax.swing.text.JTextComponent c, javax.swing.text.View view) {
+            g.setColor(new Color(255, 50, 50, 200)); // 빨간색 밑줄
+            try {
+                Shape shape = view.modelToView(offs0, javax.swing.text.Position.Bias.Forward, offs1, javax.swing.text.Position.Bias.Backward, bounds);
+                Rectangle r = (shape instanceof Rectangle) ? (Rectangle) shape : shape.getBounds();
+                int y = r.y + r.height - 2; // 텍스트 하단 좌표 계산
+                g.drawLine(r.x, y, r.x + r.width, y); // 선 긋기
+                return r;
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    };
+    private java.util.List<Object> userHighlightTags = new java.util.ArrayList<>();
 
     //나를 호출한 상세 페이지의 주소를 기억할 변수
     private NovelDetailPage detailPageTrigger;
@@ -399,12 +426,63 @@ public class NovelViewerPage{
         textArea = new JTextPane();
         textArea.setEditable(false);
 
-        //본문 드래그 방지, 마우스 깜빡이 커서 삭제
-        textArea.setFocusable(false);               //뷰어 화면이 마우스 포커스를 가져가지 못하게 차단
-        textArea.getCaret().setVisible(false);      //마우스 클릭 시 생기는 입력 커서 숨김 처리
+        // 형광펜 기능을 위해 본문 드래그 허용
+        textArea.setFocusable(true);
+        textArea.getCaret().setVisible(true);
+        textArea.getCaret().setBlinkRate(0);    // 커서 깜빡임 원천 차단
+        textArea.setCaretColor(new Color(0, 0, 0, 0));  // 커서 선 자체를 완전 투명하게 처리하여 숨김
+        textArea.setSelectionColor(new Color(100, 150, 255, 100));  // 드래그 선택 영역 반투명 파란색
 
-        //모바일 앱 느낌의 좌우 최적 마진 스페이싱
         textArea.setMargin(new Insets(35, 32, 35, 32));
+
+        // 우클릭 형광펜 팝업 메뉴 설정
+        JPopupMenu highlightMenu = new JPopupMenu();
+        JMenuItem itemYellow = new JMenuItem("노란색 형광펜");
+        JMenuItem itemGreen = new JMenuItem("초록색 형광펜");
+        JMenuItem itemUnderline = new JMenuItem("빨간색 밑줄");
+        JMenuItem itemClear = new JMenuItem("형관펜 & 밑줄 지우기");
+
+        highlightMenu.add(itemYellow);
+        highlightMenu.add(itemGreen);
+        highlightMenu.add(itemUnderline);
+        highlightMenu.addSeparator();
+        highlightMenu.add(itemClear);
+
+        // 마우스 우클릭 리스너
+        textArea.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int clickOffset = textArea.viewToModel(e.getPoint());
+                    boolean hasSelection = textArea.getSelectedText() != null && !textArea.getSelectedText().isEmpty();
+
+                    // 우클릭한 곳이 기존 형광펜 영역 내부인지 검사
+                    boolean isHighlightClicked = false;
+                    for (javax.swing.text.Highlighter.Highlight hl : textArea.getHighlighter().getHighlights()) {
+                        if (hl.getPainter() == yellowHighlightPainter || hl.getPainter() == greenHighlightPainter || hl.getPainter() == underlinePainter) {
+                            if (clickOffset >= hl.getStartOffset() && clickOffset < hl.getEndOffset()) {
+                                isHighlightClicked = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 드래그 범위가 있거나, 클릭한 곳에 형광펜이 있을 경우 팝업 호출
+                    if (hasSelection || isHighlightClicked) {
+                        if (!hasSelection) {
+                            textArea.setCaretPosition(clickOffset);
+                        }
+                        highlightMenu.show(textArea, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+
+        // 메뉴 클릭 시 실행된 액션 바인딩
+        itemYellow.addActionListener(e -> applyAndSaveHighlight("YELLOW"));
+        itemGreen.addActionListener(e -> applyAndSaveHighlight("GREEN"));
+        itemUnderline.addActionListener(e -> applyAndSaveHighlight("UNDERLINE"));
+        itemClear.addActionListener(e -> clearHighlightInRange());
 
         scrollPane = new JScrollPane(textArea);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -1283,6 +1361,9 @@ public class NovelViewerPage{
             }
 
             textArea.setCaretPosition(0);
+
+            // 텍스트 렌더링 완료 후 형관펜 복원 비동기 호출
+            SwingUtilities.invokeLater(() -> loadHighlightsForCurrentChapter());
         } catch (IOException e){
             textArea.setContentType("text/plain");      //에러 텍스트 표출을 위한 일반 텍스트 모드 복원
             textArea.setText("회차 파일을 불러오는 중 오류가 발생했습니다.\n경로를 확인하세요: " + targetFile);
@@ -1430,5 +1511,170 @@ public class NovelViewerPage{
 
         // 버튼 바로 아래에 팝업 출력
         popup.show(btnTrans, 0, btnTrans.getHeight());
+    }
+
+    // [형광펜 코어 메서드 1] 형광펜 적용 및 디스크 저장
+    private void applyAndSaveHighlight(String colorCode){
+        int start = textArea.getSelectionStart();
+        int end = textArea.getSelectionEnd();
+        if(start == end) return;
+
+        try {
+            javax.swing.text.Highlighter h = textArea.getHighlighter();
+            javax.swing.text.Highlighter.HighlightPainter p;
+            if (colorCode.equals("YELLOW")) p = yellowHighlightPainter;
+            else if (colorCode.equals("GREEN")) p = greenHighlightPainter;
+            else p = underlinePainter;
+
+            Object tag = h.addHighlight(start, end, p);
+            userHighlightTags.add(tag);
+
+            File highlightFile = new File(folderPath.replaceAll("[\\\\/]$", "") + File.separator + "highlights.txt");
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(highlightFile, true))) {
+                bw.write(currentChapter + "|" + start + "|" + end + "|" + colorCode);
+                bw.newLine();
+            }
+            textArea.setCaretPosition(textArea.getSelectionEnd());
+        } catch (Exception ex) {
+            System.out.println("칠하기 실패: " + ex.getMessage());
+        }
+    }
+
+    // [형광펜 코어 메서드 2] 선택 영역 내부의 형광펜 데이터 삭제
+    private void clearHighlightInRange(){
+        int selStart = textArea.getSelectionStart();
+        int selEnd = textArea.getSelectionEnd();
+
+        javax.swing.text.Highlighter h = textArea.getHighlighter();
+        javax.swing.text.Highlighter.Highlight[] highlights = h.getHighlights();
+
+        java.util.List<javax.swing.text.Highlighter.Highlight> toRemove = new java.util.ArrayList<>();
+        java.util.List<int[]> toAddYellow = new java.util.ArrayList<>();
+        java.util.List<int[]> toAddGreen = new java.util.ArrayList<>();
+        java.util.List<int[]> toAddUnderline = new java.util.ArrayList<>();
+
+        if (selStart == selEnd) {
+            int caretOffset = textArea.getCaretPosition();
+            for (javax.swing.text.Highlighter.Highlight hl : highlights) {
+                if (hl.getPainter() == yellowHighlightPainter || hl.getPainter() == greenHighlightPainter || hl.getPainter() == underlinePainter) {
+                    if (caretOffset >= hl.getStartOffset() && caretOffset < hl.getEndOffset()) {
+                        toRemove.add(hl);
+                        break;
+                    }
+                }
+            }
+        } else {
+            for (javax.swing.text.Highlighter.Highlight hl : highlights) {
+                if (hl.getPainter() == yellowHighlightPainter || hl.getPainter() == greenHighlightPainter || hl.getPainter() == underlinePainter) {
+                    int hlStart = hl.getStartOffset();
+                    int hlEnd = hl.getEndOffset();
+
+                    if (Math.max(selStart, hlStart) < Math.min(selEnd, hlEnd)) {
+                        toRemove.add(hl);
+
+                        if (hlStart < selStart) {
+                            if (hl.getPainter() == yellowHighlightPainter) toAddYellow.add(new int[]{hlStart, selStart});
+                            else if (hl.getPainter() == greenHighlightPainter) toAddGreen.add(new int[]{hlStart, selStart});
+                            else toAddUnderline.add(new int[]{hlStart, selStart});
+                        }
+                        if (hlEnd > selEnd) {
+                            if (hl.getPainter() == yellowHighlightPainter) toAddYellow.add(new int[]{selEnd, hlEnd});
+                            else if (hl.getPainter() == greenHighlightPainter) toAddGreen.add(new int[]{selEnd, hlEnd});
+                            else toAddUnderline.add(new int[]{selEnd, hlEnd});
+                        }
+                    }
+                }
+            }
+        }
+
+        if (toRemove.isEmpty()) return;
+
+        for (javax.swing.text.Highlighter.Highlight hl : toRemove) {
+            h.removeHighlight(hl);
+            userHighlightTags.remove(hl);
+        }
+
+        try {
+            for (int[] range : toAddYellow) userHighlightTags.add(h.addHighlight(range[0], range[1], yellowHighlightPainter));
+            for (int[] range : toAddGreen) userHighlightTags.add(h.addHighlight(range[0], range[1], greenHighlightPainter));
+            for (int[] range : toAddUnderline) userHighlightTags.add(h.addHighlight(range[0], range[1], underlinePainter));
+        } catch (Exception e) { e.printStackTrace(); }
+
+        saveAllCurrentHighlights();
+        textArea.setCaretPosition(textArea.getSelectionEnd());
+    }
+
+    // [형광펜 코어 메서드 3] 삭제 반영을 위한 로컬 파일 전면 덮어쓰기
+    private void saveAllCurrentHighlights(){
+        File highlightFile = new File(folderPath.replaceAll("[\\\\/]$", "") + File.separator + "highlights.txt");
+        java.util.List<String> allLines = new java.util.ArrayList<>();
+
+        // 타 회차의 기존 형광펜 데이터 보존 읽기
+        if (highlightFile.exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(highlightFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.startsWith(currentChapter + "|")) {
+                        allLines.add(line);
+                    }
+                }
+            } catch (Exception e) {}
+        }
+
+        // 현재 뷰어에 살아남은 하이라이트 추출
+        javax.swing.text.Highlighter.Highlight[] highlights = textArea.getHighlighter().getHighlights();
+        for (javax.swing.text.Highlighter.Highlight hl : highlights) {
+            String color = "NONE";
+            if (hl.getPainter() == yellowHighlightPainter) color = "YELLOW";
+            else if (hl.getPainter() == greenHighlightPainter) color = "GREEN";
+            else if (hl.getPainter() == underlinePainter) color = "UNDERLINE";
+
+            if (!color.equals("NONE")) {
+                allLines.add(currentChapter + "|" + hl.getStartOffset() + "|" + hl.getEndOffset() + "|" + color);
+            }
+        }
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(highlightFile, false))) {
+            for (String l : allLines) {
+                bw.write(l);
+                bw.newLine();
+            }
+        } catch (Exception e) {}
+    }
+
+    // [형광펜 코어 메서드 4] 회차 로드 시 데이터 기반 하이라이트 렌더링
+    private void loadHighlightsForCurrentChapter(){
+        javax.swing.text.Highlighter h = textArea.getHighlighter();
+
+        //렌더링이 여러 번 겹쳐서 색이 불투명해지는 현상 방지 (초기화)
+        for (Object tag : userHighlightTags) {
+            h.removeHighlight(tag);
+        }
+        userHighlightTags.clear();
+
+        File highlightFile = new File(folderPath.replaceAll("[\\\\/]$", "") + File.separator + "highlights.txt");
+        if (!highlightFile.exists()) return;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(highlightFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("\\|");
+                if (parts.length >= 4 && parts[0].equals(String.valueOf(currentChapter))) {
+                    int start = Integer.parseInt(parts[1]);
+                    int end = Integer.parseInt(parts[2]);
+                    String color = parts[3];
+
+                    javax.swing.text.Highlighter.HighlightPainter p;
+                    if (color.equals("YELLOW")) p = yellowHighlightPainter;
+                    else if (color.equals("GREEN")) p = greenHighlightPainter;
+                    else p = underlinePainter;
+
+                    Object tag = h.addHighlight(start, end, p);
+                    userHighlightTags.add(tag);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("복원 오류: " + e.getMessage());
+        }
     }
 }
