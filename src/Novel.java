@@ -18,6 +18,9 @@ public class Novel {
     //등록 히스토리 추적을 위한 작품 최초 등록일 필드 신설'
     private String createdDate;
 
+    //연재중단 상태를 추적할 플래그 변수
+    private boolean isHiatus;
+
 
     //전면 확장된 생성자
     public Novel(String title, String author, String genre, String platform, String folderPath, String coverPath,
@@ -35,7 +38,7 @@ public class Novel {
         this.isFavorite = isFavorite;
 
         this.isCompleted = false;       //기본값은 연재중(false)로 세팅
-
+        this.isHiatus = false;
         this.createdDate = java.time.LocalDateTime.now().toString(); //년-월-일 시각을 문자열로 배정
     }
 
@@ -54,6 +57,8 @@ public class Novel {
     public boolean isCompleted() { return isCompleted; }
 
     public String getCreatedDate() { return createdDate; }
+
+    public boolean isHiatus() { return isHiatus; }
 
 
     //Setter 메서드들
@@ -76,5 +81,7 @@ public class Novel {
     public void setCompleted(boolean completed) { this.isCompleted = completed; }
 
     public void setCreatedDate(String createdDate) { this.createdDate = createdDate; }
+
+    public void setHiatus(boolean hiatus) { this.isHiatus = hiatus; }
 
 }

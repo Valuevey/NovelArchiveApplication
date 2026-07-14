@@ -1,14 +1,28 @@
-import javax.crypto.CipherInputStream;
 import javax.swing.*;
-import javax.swing.text.StyleConstants;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
-import java.nio.Buffer;
 import java.util.ArrayList;
 
 public class NovelViewerPage{
+
+    // 현재 열려있는 뷰어 창을 추적하기 위한 정적(static) 변수
+    private static JFrame activeViewerFrame = null;
+    private static NovelViewerPage activeInstance = null;
+
+    //지역 변수 였던 frame을 멤버 변수로 승격
+    private JFrame frame;
+
+    // 기존에 열려있는 뷰어가 있다면 안전하게 종료(책갈피 저장 포함)시키는 메서드
+    public static void closeActiveViewer() {
+        if (activeViewerFrame != null) {
+            // 강제로 창 닫기 이벤트를 발생시켜 windowClosing(책갈피 저장 로직)이 정상 작동하도록 유도
+            activeViewerFrame.dispatchEvent(new WindowEvent(activeViewerFrame, WindowEvent.WINDOW_CLOSING));
+            activeViewerFrame = null;
+        }
+    }
 
     private int currentFontSize = 16; //글자 크기 기억할 변수(기본값 : 16)
     private String currentFontName = "맑은 고딕";  //기본 글꼴 : 맑은 고딕
@@ -24,6 +38,9 @@ public class NovelViewerPage{
     private String folderPath;
     private String bookmarkFile;
 
+    // 현재 읽고 있는 텍스트의 모드(기본:원본)
+    private String currentTranslationMode = "원본";
+
     private JTextPane textArea;  //버튼 누를 때마다 값이 바뀌도록 static 변수로 선언
     private JPanel topPanel;
     private JPanel bottomPanel; //하단에 패널 변수 추가
@@ -31,11 +48,30 @@ public class NovelViewerPage{
     private JScrollPane scrollPane;
     private JTextField chapterInputField;  //회차 입력창
 
+    // 검색창 관련 멤버 변수
+    private JPanel searchBarPanel;
+    private JTextField searchField;
+    private JLabel searchStatusLabel;
+    private java.util.List<Integer> searchResults = new java.util.ArrayList<>();
+    private int currentSearchIndex = -1;
+    private String currentKeyword = "";
+
+    // 검색어 하이라이트 제어 및 색상 변수
+    private java.util.List<Object> highlightTags = new java.util.ArrayList<>();
+    private javax.swing.text.DefaultHighlighter.DefaultHighlightPainter normalPainter =
+            new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+    private javax.swing.text.DefaultHighlighter.DefaultHighlightPainter currentPainter =
+            new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(new Color(255, 150, 0)); // 강조용 주황색
+
     //나를 호출한 상세 페이지의 주소를 기억할 변수
     private NovelDetailPage detailPageTrigger;
 
     //메서드가 열릴 때 '폴더 경로'를 함께 매개변수로 받도록 설계
     public void openViewer(String selectedFolderPath, int targetChapter, NovelDetailPage detailPage, Novel novel){
+        // 기존에 열린 뷰어가 있다면 책갈피를 저장하고 안전하게 닫음(창 개수 1개 제한)
+        closeActiveViewer();
+
+        activeInstance = this;  //현재 새 뷰어를 활성 뷰어로 등록
         this.detailPageTrigger = detailPage;    //호출한 상세창 주소 기억
 
         //경로 끝에 슬래시가 누락되었다면 붙여주는 처리
@@ -56,15 +92,18 @@ public class NovelViewerPage{
             loadBookmark();
         }
 
+        // 창을 열기 전에 기존에 열려있는 뷰어가 있다면 닫기
+        closeActiveViewer();
+
         //1. 프로그램의 메인 창(JFrame) 생성
-        JFrame frame = new JFrame("모던 웹소설 뷰어");
+        this.frame = new JFrame("모던 웹소설 뷰어");
 
         //창 닫을 때 바로 종료안하고 책갈피에 저장하도록 설정
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        frame.setSize(480, 640);  //창 크기(너비 : 480, 높이 : 640)
-        frame.setLocationRelativeTo(null);  //창이 모니터 정 중앙에 뜨도록 설정
-        frame.setLayout(new BorderLayout());
+        this.frame.setSize(750, 730);
+        this.frame.setLocationRelativeTo(null);  // 창이 모니터 정 중앙에 뜨도록 설정
+        this.frame.setLayout(new BorderLayout());
 
         //2. 상단 메뉴바(JPanel) 생성
         topPanel = new JPanel();
@@ -80,6 +119,35 @@ public class NovelViewerPage{
 
         // 소설 뷰어 설정 격리용 톱니바퀴 버튼 배치
         JButton btnSettings = new JButton("설정");
+
+        // 번역 버튼 초기화 및 액션
+        JButton btnTranslation = new JButton("번역");
+        String novelName = new File(folderPath.replaceAll("[\\\\/]$", "")).getName();
+        File transRoot = new File("C:\\novel\\translation\\" + novelName);
+
+        //폴더가 이미 존재한다면 즉시 ▼ 모드로 전환
+        if(transRoot.exists() && transRoot.listFiles(File::isDirectory) != null && transRoot.listFiles(File::isDirectory).length > 0){
+            btnTranslation.setText(currentTranslationMode + "▼");
+        }
+
+        btnTranslation.addActionListener(e -> {
+            if(btnTranslation.getText().equals("번역")){
+                // 폴더 최초 생성 로직
+                String input = JOptionPane.showInputDialog(frame, "새 번역본 폴더의 이름을 입력하세요.\n(예: 영어, 일본어 등)");
+                if(input != null && !input.trim().isEmpty()){
+                    File newTransDir = new File(transRoot, input.trim());
+                    if(newTransDir.mkdirs()){
+                        currentTranslationMode = "원본";
+                        btnTranslation.setText(currentTranslationMode+ " ▼");   //버튼 형태 전환
+                        JOptionPane.showMessageDialog(frame, "번역 폴더가 생성되었습니다. 내부에 텍스트 파일을 넣어주세요.\n경로: " + newTransDir.getAbsolutePath());
+                    }
+                }
+            } else{
+                // 팝업 메뉴 펼치기
+                btnTranslation.setText(currentTranslationMode + " ▲");
+                showTranslationPopup(btnTranslation, transRoot, frame);
+            }
+        });
 
         JButton btnMemoBookmark = new JButton();
         btnMemoBookmark.setFocusPainted(false);
@@ -177,7 +245,7 @@ public class NovelViewerPage{
         ));
 
         //버튼 포커스 테두리 청소
-        JButton[] topButton = {btnPrev, btnNext, btnGo, btnSettings, btnMemoBookmark};
+        JButton[] topButton = {btnPrev, btnNext, btnGo, btnTranslation, btnSettings, btnMemoBookmark};
         for(JButton btn: topButton){
             btn.setFocusPainted(false);
 
@@ -193,7 +261,11 @@ public class NovelViewerPage{
                     btn.setPreferredSize(new Dimension(55, 28));
                     btn.setMinimumSize(new Dimension(55, 28));
                     btn.setMaximumSize(new Dimension(55, 28));
-                } else{
+                } else if(btn == btnTranslation) {
+                    btn.setPreferredSize(new Dimension(95, 28));
+                    btn.setMinimumSize(new Dimension(95, 28));
+                    btn.setMaximumSize(new Dimension(95, 28));
+                }else{
                     //버튼 크기를 균일하게
                     btn.setPreferredSize(new Dimension(82, 28));
                     btn.setMinimumSize(new Dimension(82, 28));
@@ -232,6 +304,8 @@ public class NovelViewerPage{
         topPanel.add(btnNext);
 
         topPanel.add(Box.createHorizontalGlue());
+        topPanel.add(btnTranslation);
+        topPanel.add(Box.createHorizontalStrut(6));
         topPanel.add(btnSettings);
         topPanel.add(Box.createHorizontalStrut(6));
         topPanel.add(btnMemoBookmark);
@@ -327,7 +401,6 @@ public class NovelViewerPage{
 
         //본문 드래그 방지, 마우스 깜빡이 커서 삭제
         textArea.setFocusable(false);               //뷰어 화면이 마우스 포커스를 가져가지 못하게 차단
-        textArea.setHighlighter(null);              //텍스트를 마우스로 드래그하여 선택하는 기능 제거
         textArea.getCaret().setVisible(false);      //마우스 클릭 시 생기는 입력 커서 숨김 처리
 
         //모바일 앱 느낌의 좌우 최적 마진 스페이싱
@@ -434,7 +507,7 @@ public class NovelViewerPage{
                                 String line;
                                 while((line = br.readLine()) != null){
                                     String[] splitData = line.split("\\|", -1);
-                                    if(splitData.length == 10 && splitData[0].equals(novel.getTitle())){
+                                    if(splitData.length >=9 && splitData[0].equals(novel.getTitle())){
                                         splitData[8] = now.toString();
                                         line = String.join("|", splitData);
                                     }
@@ -478,11 +551,167 @@ public class NovelViewerPage{
         });
 
         //9. 전체 레이아웃 조립하기
-        frame.add(topPanel, BorderLayout.NORTH);    //위쪽은 메뉴바
-        frame.add(scrollPane, BorderLayout.CENTER); //가운데는 본문
-        frame.add(bottomPanel, BorderLayout.SOUTH); //아래쪽은 상태창
+        JPanel headerWrapper = new JPanel(new BorderLayout());
+        headerWrapper.add(topPanel, BorderLayout.NORTH);
+        initSearchBar(headerWrapper);   //검색바를 headerWrapper의 하단에 조립
+
+        frame.add(headerWrapper, BorderLayout.NORTH);
+        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Ctrl+F 검색 단축키 바인딩(JtextPane 포커스 기준)
+        textArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke("control F"), "showSearch");
+        textArea.getActionMap().put("showSearch", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                searchBarPanel.setVisible(true);
+                searchField.requestFocusInWindow();
+                searchBarPanel.getParent().revalidate();
+                searchBarPanel.getParent().repaint();
+            }
+        });
 
         frame.setVisible(true);
+    }
+
+    private void initSearchBar(JPanel parent){
+        searchBarPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        searchBarPanel.setBackground(new Color(245, 245, 245));
+        searchBarPanel.setVisible(false);       //기본은 숨김
+
+        searchField = new JTextField(15);
+        searchStatusLabel = new JLabel("0/0");
+        searchStatusLabel.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+
+        JButton btnPrevSearch = new JButton("▲");
+        JButton btnNextSearch = new JButton("▼");
+        JButton btnCloseSearch = new JButton("X");
+
+        JButton[] sBtns = {btnPrevSearch, btnNextSearch, btnCloseSearch};
+        for(JButton b : sBtns){
+            b.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            b.setFocusPainted(false);
+            b.setContentAreaFilled(false);
+            b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+
+        btnNextSearch.addActionListener(e -> navigateSearch(1));
+        btnPrevSearch.addActionListener(e -> navigateSearch(-1));
+
+        btnCloseSearch.addActionListener(e -> {
+            if(textArea != null){
+                textArea.getHighlighter().removeAllHighlights();
+            }
+            searchBarPanel.setVisible(false);
+            searchBarPanel.getParent().revalidate();
+            searchBarPanel.getParent().repaint();
+        });
+
+        searchField.addActionListener(e -> {
+            String keyword = searchField.getText();
+            if(keyword.equals(currentKeyword) && !searchResults.isEmpty()){
+                navigateSearch(1);
+            } else{
+                performSearch(keyword);
+            }
+        });
+
+        searchField.addKeyListener(new java.awt.event.KeyAdapter(){
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e){
+                if(e.getKeyCode() == java.awt.event.KeyEvent.VK_UP){
+                    navigateSearch(-1);
+                } else if(e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN){
+                    navigateSearch(1);
+                }
+            }
+        });
+
+        searchBarPanel.add(searchField);
+        searchBarPanel.add(searchStatusLabel);
+        searchBarPanel.add(btnPrevSearch);
+        searchBarPanel.add(btnNextSearch);
+        searchBarPanel.add(btnCloseSearch);
+
+        parent.add(searchBarPanel, BorderLayout.SOUTH);
+    }
+
+    private void performSearch(String keyword){
+        if(textArea == null) return;
+
+        javax.swing.text.Highlighter h = textArea.getHighlighter();
+        h.removeAllHighlights();
+        searchResults.clear();
+        highlightTags.clear();
+        currentSearchIndex = -1;
+        currentKeyword = keyword;
+
+        if(keyword.trim().isEmpty()){
+            searchStatusLabel.setText("0/0");
+            return;
+        }
+
+        try{
+            // ※ JTextPane의 HTML 태그를 무시하고 순수 텍스트만 가져오기 위한 안전 코드
+            javax.swing.text.Document doc = textArea.getDocument();
+            String content = doc.getText(0, doc.getLength());
+            int index = content.indexOf(keyword);
+
+            while(index >= 0){
+                Object tag = h.addHighlight(index, index + keyword.length(), normalPainter);
+                highlightTags.add(tag);
+                searchResults.add(index);
+                index = content.indexOf(keyword, index + keyword.length());
+            }
+        } catch(Exception ex){
+            ex.printStackTrace();
+        }
+
+        if(!searchResults.isEmpty()){
+            navigateSearch(1);
+        } else{
+            searchStatusLabel.setText("0/0");
+            JOptionPane.showMessageDialog(frame, "일치하는 단어를 찾을 수 없습니다.");
+        }
+    }
+
+    private void navigateSearch(int direction){
+        if(searchResults.isEmpty()) return;
+
+        javax.swing.text.Highlighter h = textArea.getHighlighter();
+
+        if(currentSearchIndex >= 0 && currentSearchIndex < highlightTags.size()){
+            try{
+                h.removeHighlight(highlightTags.get(currentSearchIndex));
+                int oldPos = searchResults.get(currentSearchIndex);
+                Object normalTag = h.addHighlight(oldPos, oldPos + currentKeyword.length(), normalPainter);
+                highlightTags.set(currentSearchIndex, normalTag);
+            } catch(Exception e){}
+        }
+
+        if(currentSearchIndex == -1){
+            currentSearchIndex = 0;
+        } else{
+            currentSearchIndex = (currentSearchIndex + direction + searchResults.size()) % searchResults.size();
+        }
+
+        int pos = searchResults.get(currentSearchIndex);
+        try{
+            h.removeHighlight(highlightTags.get(currentSearchIndex));
+            Object currentTag = h.addHighlight(pos, pos + currentKeyword.length(), currentPainter);
+            highlightTags.set(currentSearchIndex, currentTag);
+
+            Rectangle viewRect = textArea.modelToView2D(pos).getBounds();
+            if(viewRect != null){
+                viewRect.y = Math.max(0, viewRect.y - 50);
+                viewRect.height += 100;
+                textArea.scrollRectToVisible(viewRect);
+            }
+            textArea.setCaretPosition(pos);
+        } catch (Exception ex){}
+
+        searchStatusLabel.setText((currentSearchIndex + 1) + "/" + searchResults.size());
     }
 
     //상단바 잘림을 해결하는 글자/테마 다용도 가독성 설정 모달 팝업
@@ -660,6 +889,8 @@ public class NovelViewerPage{
             btn.setContentAreaFilled(false);
             btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         }
+
+
 
         //각 테마 버튼에 고유한 배경/글자색 주입, 선택시 청록색 테두리
         java.util.function.Consumer<String> refreshThemeButtonStyles = (activeTheme) -> {
@@ -928,16 +1159,37 @@ public class NovelViewerPage{
         StringBuilder sb = new StringBuilder();
         File targetFile = null;
 
+        // 1. 읽어야 할 폴더 경로 결정(원본 vs 번역본)
+        String searchPath = folderPath;
+        if(!"원본".equals(currentTranslationMode)){
+            File novelFolder = new File(folderPath.replaceAll("[\\\\/]$", ""));
+            // c:\novel\translation\[작품명]\[언어] 폴더로 경로 변경
+            searchPath = "C:\\novel\\translation\\" + novelFolder.getName() + File.separator + currentTranslationMode + File.separator;
+        }
+
         //폴더 안의 모든 파일을 전수 조사하여 맨 앞 숫자가 타겟 회차 번호와 일치하는 실제 파일을 발굴
-        File dir = new File(folderPath);
+        File dir = new File(searchPath);
+
         if(dir.exists() && dir.isDirectory()){
             File[] files = dir.listFiles((dir1, name) ->
                     name.toLowerCase().endsWith(".txt") && !name.equals("bookmark.txt") && !name.equals("memo_bookmarks.txt"));
             if(files != null){
                 for(File f : files){
                     try{
-                        String numStr = f.getName().replaceAll("^\\s*(\\d+).*", "$1");
-                        if(Integer.parseInt(numStr) == chapterNumber){
+                        //파일명 앞자리 숫자 추출 시도
+                        String origName = f.getName();
+                        String numStr = origName.replaceAll("^\\s*(\\d+).*", "$1");
+
+                        //파일명이 숫자로 시작하는 장편 소설 기조일 때
+                        if(numStr.matches("\\d+")){
+                            if(Integer.parseInt(numStr) == chapterNumber){
+                                targetFile = f;
+                                break;
+                            }
+                        }
+                        // [단편/썰 대응 안전코드] 숫자가 없는 순전 문장형 파일명일 때
+                        else if(folderPath.contains("2차텍스트")){
+                            //단편 서재는 파일 하나가 곧 전체이므로, 폴더 내부의 첫 번째 유효 텍스트 파일을 직접 타겟팅
                             targetFile = f;
                             break;
                         }
@@ -946,12 +1198,15 @@ public class NovelViewerPage{
             }
         }
 
-        //일치하는 매칭 파일을 찾지 못했을 경우의 바엉 예외 처리
+        //일치하는 매칭 파일을 찾지 못했을 경우의 방어 예외 처리
         if(targetFile == null || !targetFile.exists()){
+            textArea.setContentType("text/plain");  //에러 출력 모드 안정화
             textArea.setText("회차 파일을 찾을 수 없습니다.\n타겟 회차 번호: " + chapterNumber + "화\n폴터 내 파일명을 확인하세요.");
             return;
         }
-        try(BufferedReader br = new BufferedReader(new FileReader(targetFile))){
+
+        //글꼴 유실 방지를 위해 UTF-8 인코딩 스트림 명시적 선언 명명
+        try(BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(targetFile), "UTF-8"))){
             textArea.setContentType("text/html");
 
             String firstLine = br.readLine();   //파일의 첫 번째 줄(제목)을 따로 떼어냄
@@ -960,20 +1215,57 @@ public class NovelViewerPage{
             while((line = br.readLine()) != null){
                 bodySb.append(line).append("<br>"); //html 줄바꿈 태그로 치환
             }
+
+            // 삽화 삽입 로직 시작
+            // 텍스트 폴더 경로(folderPath)에서 작품 폴더 이름(Novel Title)을 추출
+            File txtFolder = new File(folderPath.replaceAll("[\\\\/]$", ""));
+            String actualFolderName = txtFolder.getName();      // 실제 폴더명 사용
+
+            // ImageManagerDialog에서 생성한 폴더명과 동일하게 특수문자 정제
+            String safeNovelName = folderPath.replaceAll("[\\\\/:*?\"<>|]", "_");
+
+            // 이미지 폴더 경로: C:\novel\images\[작품명]\mapping.txt
+            String mappingPath = "C:\\novel\\images\\" + actualFolderName + "\\mapping.txt";
+            File mappingFile = new File(mappingPath);
+
+            if(mappingFile.exists()){
+                try(BufferedReader mapBr = new BufferedReader(new InputStreamReader(new FileInputStream(mappingFile), "UTF-8"))){
+                    String mapLine;
+                    while((mapLine = mapBr.readLine()) != null){
+                        String[] parts = mapLine.split("=", 2);
+                        if(parts.length < 2) continue;
+
+                        String fileName = parts[0];
+                        String[] meta = parts[1].split("\\|");  // 제목|회차|설명
+
+                        // 2. 현재 회차와 매핑된 회차가 일치하거나 ALL인 경우 삽입
+                        if(meta.length >= 2 && meta[1].equals(String.valueOf(chapterNumber))){
+                            // 이미지 소스 경로: C:\novel\images\[작품명]\[파일명]
+                            String imageSrc = "C:\\novel\\images\\" + actualFolderName + File.separator + fileName;
+
+                            // HTML 하단에 이미지 추가
+                            bodySb.append("<br><br><div style='text-align:center;'>");
+                            bodySb.append("<img src='file:///" + imageSrc.replace("\\", "/") + "' width='400'>");
+                            bodySb.append("<br><p style='color:gray; font-size:10pt;'>" + (meta.length > 2 ? meta[2] : "") + "</p>");
+                            bodySb.append("</div>");
+                        }
+                    }
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+
             String titleText = (firstLine != null) ? firstLine.trim() : "";
 
             String htmlTitleStyle = "text-align: center; font-family: " + currentFontName
                     + "; font-size: 15pt; font-weight: bold; color: rgb("
                     + currentFgColor.getRed() + ", " + currentFgColor.getGreen() + ", " + currentFgColor.getBlue()
                     + "); margin-bottom: 8px;";
-            String htmlDecorStyle = "text-align: center; color: rgb(200, 210, 215)l font-size: 10pt; margin-bottom: 25px;";
-            String htmlBodyStyle = "font-family: " + currentFontName + "; font-size: " + currentFontSize + "pt; color: rgb("
-                    + currentFgColor.getRed() + ", " + currentFgColor.getGreen() + ", " + currentFgColor.getBlue()
-                    + "); line-height: 1.6;";
+            String htmlDecorStyle = "text-align: center; color: rgb(200, 210, 215); font-size: 10pt; margin-bottom: 25px;";
 
-            //중앙에 장식될 장식선
+            String htmlBodyStyle = "font-family: " + currentFontName +
+                    "; font-size: " + currentFontSize + "pt; " +
+                    "color: rgb(" + currentFgColor.getRed() + ", " + currentFgColor.getGreen() + ", " + currentFgColor.getBlue() + ");";
+
             String decorLine = "─────── ◆ ───────";
-            //◆ ─────── ◆
 
             String finalHtml = "<html><body style='padding: 0; margin: 0;'>"
                     + "<div style='" + htmlTitleStyle + "'>" + titleText + "</div>"
@@ -982,11 +1274,14 @@ public class NovelViewerPage{
                     + "</body></html>";
             textArea.setText(finalHtml);
 
-            //본문을 성공적으로 읽으면 하단 상태 표시바에도 동적 갱신
-            int progress = (int) ((double) chapterNumber / totalChapters) * 100;
-            statusLabel.setText("[ " + chapterNumber + "화 / 총 " + totalChapters + "화 ] (진행률 " + progress + "%)");
+            // 단편 서재일 때는 하단 진행률을 단편 전용 포맷으로 가독성 처리
+            if (folderPath.contains("2차텍스트")) {
+                statusLabel.setText("[ 단편 원고 열람 중 ] - " + targetFile.getName().replace(".txt", ""));
+            } else {
+                int progress = (int) (((double) chapterNumber / totalChapters) * 100);
+                statusLabel.setText("[ " + chapterNumber + "화 / 총 " + totalChapters + "화 ] (진행률 " + progress + "%)");
+            }
 
-            //페이지 상단으로 스크롤 초기화
             textArea.setCaretPosition(0);
         } catch (IOException e){
             textArea.setContentType("text/plain");      //에러 텍스트 표출을 위한 일반 텍스트 모드 복원
@@ -994,6 +1289,7 @@ public class NovelViewerPage{
         }
     }
 
+    //현재 읽고 있는 회차 번호를 bookmark.txt 파일에 쓰는 메서드
     //현재 읽고 있는 회차 번호를 bookmark.txt 파일에 쓰는 메서드
     private void saveBookmark(){
         try(BufferedWriter bw = new BufferedWriter(new FileWriter(bookmarkFile))){
@@ -1056,5 +1352,83 @@ public class NovelViewerPage{
 
         // HTML을 문자열 치환 대신 loadChapter로 다시 그림 (HTML 모드 유지)
         loadChapter(currentChapter);
+    }
+
+    // 번역본 드롭다운 팝업 패널을 조립하고 화면에 띄우는 메서드
+    private void showTranslationPopup(JButton btnTrans, File transRoot, JFrame parentFrame){
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBackground(Color.WHITE);
+        popup.setBorder(BorderFactory.createLineBorder(new Color(215, 222, 228), 1));
+
+        // 커스텀 구분선 생성 엔진
+        java.util.function.Supplier<JPopupMenu.Separator> createSeparator = () -> new JPopupMenu.Separator(){
+            @Override
+            public void paintComponent(Graphics g){
+                g.setColor(new Color(230, 235, 240));
+                g.drawLine(10, getHeight() / 2, getWidth() - 10, getHeight() / 2);
+            }
+            @Override
+            public Dimension getPreferredSize() { return new Dimension(0, 5); }
+        };
+
+        // 메뉴 아이템 팩토리
+        java.util.function.Function<String, JMenuItem> createMenuItem = (text) -> {
+            JMenuItem item = new JMenuItem(text);
+            item.setBackground(Color.WHITE);
+            item.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            item.setForeground(new Color(50, 55, 60));
+            item.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+            item.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            return item;
+        };
+
+        // 1. [+ 추가] 버튼
+        JMenuItem addMenu = createMenuItem.apply("+ 추가");
+        addMenu.setForeground(new Color(0, 140, 140));
+        addMenu.addActionListener(e -> {
+            String input = JOptionPane.showInputDialog(parentFrame, "추가할 번역본 폴더의 이름을 입력하세요.\n(예: 영어, 일본어 등)");
+            if(input != null && !input.trim().isEmpty()){
+                new File(transRoot, input.trim()).mkdirs();
+                // 생성 후 즉시 팝업이 닫히며 원상복구 됨
+            }
+        });
+        popup.add(addMenu);
+        popup.add(createSeparator.get());
+
+        // 2. [원본] 버튼(원래 소설로 되돌아가기 위함)
+        JMenuItem origMenu = createMenuItem.apply("원본");
+        origMenu.addActionListener(e -> {
+            currentTranslationMode = "원본";
+            loadChapter(currentChapter);
+            btnTrans.setText("원본 ▼");
+        });
+        popup.add(origMenu);
+
+        // 3. 만들어진 번역본 폴더들을 스캔하여 목록에 동적 추가
+        File[] transDirs = transRoot.listFiles(File::isDirectory);
+        if(transDirs != null){
+            for(File d : transDirs){
+                popup.add(createSeparator.get());
+                JMenuItem tMenu = createMenuItem.apply(d.getName());
+                tMenu.addActionListener(e -> {
+                    currentTranslationMode = d.getName();
+                    loadChapter(currentChapter); // 화면 갱신 추가
+                    btnTrans.setText(currentTranslationMode + " ▼"); // 텍스트 업데이트
+                });
+                popup.add(tMenu);
+            }
+        }
+
+        // 팝업이 닫일 때 버튼을 세모에서 다시 세모 뒤집은 거로 원상 복구
+        popup.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            @Override public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {}
+            @Override public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
+                btnTrans.setText(currentTranslationMode + " ▼");
+            }
+            @Override public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {}
+        });
+
+        // 버튼 바로 아래에 팝업 출력
+        popup.show(btnTrans, 0, btnTrans.getHeight());
     }
 }

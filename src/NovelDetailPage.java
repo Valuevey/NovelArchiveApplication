@@ -7,6 +7,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class NovelDetailPage {
+    // 현재 열려있는 상세창을 추적
+    private static JFrame activeDetailFrame = null;
+
+    // 기존 상세창을 즉시 닫는 메서드
+    public static void closeActiveDetail() {
+        if (activeDetailFrame != null) {
+            activeDetailFrame.dispose();
+            activeDetailFrame = null;
+        }
+    }
     private JFrame detailFrame;
     private JPanel chapterListPanel;
     private JPanel pageTabPanel;        //페이징 버튼들이 들어갈 패널
@@ -37,7 +47,7 @@ public class NovelDetailPage {
     private boolean isDescExpanded = false;
     private JScrollPane descScrollPane;
 
-    private JTextArea taDescription;
+    private JTextPane htmlDescription;
 
     //보관함에서 소설 데이터를 넘겨받아 창을 연다
     public void openDetailPage(Novel novel, BookShelfPage shelf){
@@ -47,7 +57,12 @@ public class NovelDetailPage {
         //1. 책갈피 정보를 먼저 로드하여 이어보기 회차 확인
         loadBookmarkInfo();
 
-        detailFrame = new JFrame("소설 정보 - " + novel.getTitle());
+        //다른 작품을 클릭해서 새 상세창이 열리면, 기존 상세창과 뷰어를 모두 자동 종료
+        NovelDetailPage.closeActiveDetail();
+        NovelViewerPage.closeActiveViewer();
+
+        detailFrame = new JFrame("상세 정보 - " + novel.getTitle());
+        activeDetailFrame = detailFrame;    //현재 창을 전역 변수에 등록
         detailFrame.setSize(530, 750);
         detailFrame.setLocationRelativeTo(null);
         detailFrame.setLayout(new BorderLayout());
@@ -232,7 +247,7 @@ public class NovelDetailPage {
         int titleFontSize = (titleText.length() > 20) ? 16 : 20;    //20자 초과 시 글자 크기를 16으로 줄임
 
         JLabel lblTitle = new JLabel("<html><body style='width: 240px;'>" + novel.getTitle() + "</body></html>");
-        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 20));
+        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, titleFontSize));
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         //가로 260, 세로 65를 줘서 2~3줄짜리 제목 높이가 잘림 없이 아래 라벨을 밀어내며 전부 출력되도록 공간 확보
@@ -286,7 +301,8 @@ public class NovelDetailPage {
         for(String key : splitKeys){
             if(!key.trim().isEmpty()) sbKeys.append("#").append(key.trim()).append(" ");
         }
-        JLabel lblKeywords = new JLabel(sbKeys.toString().isEmpty() ? "#키워드 없음" : sbKeys.toString());
+        JLabel lblKeywords = new JLabel("<html><div style='width: 220px;'>"+
+                (sbKeys.toString().isEmpty() ? "#키워드 없음" : sbKeys.toString()) + "</div></html>");
         lblKeywords.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
         lblKeywords.setForeground(new Color(0, 140, 180));
         lblKeywords.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -313,6 +329,9 @@ public class NovelDetailPage {
         menuEdit.addActionListener(e -> {
             //수정 전용 팝업 창을 띄우고 현재 소설 객체를 전달
             AddNovelDialog editDialog = new AddNovelDialog(detailFrame, currentNovel);
+            if (currentNovel.getGenre().contains("패러디")) {
+                editDialog.setParodyMode(true);
+            }
             editDialog.setVisible(true);
 
             //사용자가 수정을 완료하고 팝업을 닫았을 때 결과 수집
@@ -328,12 +347,18 @@ public class NovelDetailPage {
                 currentNovel.setKeywords(editedResult.getKeywords());
                 currentNovel.setDescription(editedResult.getDescription());
                 currentNovel.setCompleted(editedResult.isCompleted());
+                currentNovel.setHiatus(editedResult.isHiatus());
 
 
                 //2. 메인 스토리지 파일 영구 백업 동기화 및 메인 서재 리프레시
                 if (parentShelf != null) {
-                    parentShelf.saveLibraryData();
-                    parentShelf.refreshLibrary();
+                    if("패러디".equals(currentNovel.getGenre()) && parentShelf.getParodyPanel() != null){
+                        parentShelf.getParodyPanel().saveParodyMetadata();
+                        parentShelf.getParodyPanel().refreshParodyLibrary();
+                    } else{
+                        parentShelf.saveLibraryData();
+                        parentShelf.refreshLibrary();
+                    }
                 }
 
                 //3. 현재 열려있는 상세창의 UI 데이터들도 실시간 갱신 처리
@@ -342,7 +367,13 @@ public class NovelDetailPage {
                 int editTitleFontSize = (editTitleText.length() > 20) ? 16 : 20;
 
                 lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, editTitleFontSize));
-                lblTitle.setText("<html><body style='width: 240px;'>" + editTitleText + "</body></html>");
+                if(currentNovel.isCompleted()){
+                    lblTitle.setText("<html><body style='width: 240px;'>" + editTitleText + "<font color='#00A0A0'><b> [완결]</b></font></body></html>");
+                } else if(currentNovel.isHiatus()){
+                    lblTitle.setText("<html><body style='width: 240px;'>" + editTitleText + "<font color='#6E5AC8'><b> [연재중단]</b></font></body></html>");
+                } else{
+                    lblTitle.setText("<html><body style='width: 240px;'>" + editTitleText + "</body></html>");
+                }
 
                 String updatedGenre = (currentNovel.getGenre() == null ||
                         currentNovel.getGenre().isEmpty() ? "미분류" : currentNovel.getGenre());
@@ -351,7 +382,12 @@ public class NovelDetailPage {
                 lblGenreAuthor.setText(updatedGenre + "ㆍ" + updatedAuthor);
 
                 lblPlatform.setText("플랫폼: " + currentNovel.getPlatform());
-                taDescription.setText(currentNovel.getDescription().isEmpty() ? "등록된 작품 소개글이 없습니다." : currentNovel.getDescription());
+                String editDescTitle = "<span style='color: rgb(0, 120, 120); font-weight: bold; font-size: 12pt;'>작품소개</span><br>";
+                String editRawBody = currentNovel.getDescription().isEmpty() ? "등록된 작품 소개글이 없습니다" : currentNovel.getDescription();
+                String editCollapsedBody = editRawBody.replace("\n", " ").trim();
+                if(editCollapsedBody.length() > 40) editCollapsedBody = editCollapsedBody.substring(0, 40) + "...";
+                htmlDescription.setText("<html><body style='font-family: 맑은 고딕; font-size: 10.5pt; color: rgb(65, 70, 80); line-height: 1.4;'>"
+                + editDescTitle + (isDescExpanded ? editRawBody.replace("\n", "<br>") : editCollapsedBody) + "</body></html>");
 
                 //키워드 # 마킹 복원 동기화
                 String[] editSplitKeys = currentNovel.getKeywords().split(",");
@@ -412,9 +448,20 @@ public class NovelDetailPage {
             openSummaryNoteDialog();
         });
 
+        //팝업 메뉴 내부 항목 D : 삽화 추가 기능
+        JMenuItem menuImage = new JMenuItem("삽화 및 이미지");
+        menuImage.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        menuImage.setBackground(Color.WHITE);
+        menuImage.addActionListener(e -> {
+            //삽화 관리 다이얼로그 호출(아직 안 만들어서 메서드만 연결)
+            openImageManagerDialog();
+        });
+
         //메뉴 상자에 항목 부착 조립
         moreMenu.add(memuSummary);          //메모 기능
         moreMenu.add(new JSeparator());     //실선 구분 바
+        moreMenu.add(menuImage);            //삽화 기능
+        moreMenu.add(new JSeparator());
         moreMenu.add(menuEdit);             //작품 수정 기능
         moreMenu.add(new JSeparator());
         moreMenu.add(menuDelete);           //작품 삭제 기능
@@ -587,7 +634,7 @@ public class NovelDetailPage {
         }
 
         // HTML 태그 인식을 위한 JTextPane 인터페이스 선언 및 생성
-        JTextPane htmlDescription = new JTextPane(); //
+        htmlDescription = new JTextPane(); //
         htmlDescription.setContentType("text/html"); //
 
         // 가로 방향 팽창 및 스크롤바 생성을 근본적으로 차단하기 위해 nowrap 스타일을 삭제하고 안전하게 문장을 주입합니다.
@@ -814,7 +861,13 @@ public class NovelDetailPage {
     //소설 폴더 내의 .txt 파일들을 스캔하여 정렬하는 로직
     private void readChapterFiles(){
         txtFiles.clear();   //데이터 비우기
-        File dir = new File(currentNovel.getFolderPath());
+
+        String folderPath = currentNovel.getFolderPath();
+        File dir = new File(folderPath);
+
+        if(!folderPath.contains("novel_list") && !folderPath.contains("short_stories") && !folderPath.contains("parodies")){
+            dir = new File("C:\\novel\\novels\\novel_list\\" + currentNovel.getTitle());
+        }
 
         if(dir.exists() && dir.isDirectory()){
             File[] files = dir.listFiles((dir1, name) -> {
@@ -1261,5 +1314,20 @@ public class NovelDetailPage {
 
         //메모장 활성화
         noteDialog.setVisible(true);
+    }
+
+    //삽화 관리 엔진
+    private void openImageManagerDialog(){
+        String baseDir = "C:\\novel\\images";
+        String folderName = currentNovel.getTitle().replaceAll("[\\\\/:*?\"<>|]", "_");
+        File dir = new File(baseDir + File.separator + folderName);
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        // 2. 관리 모달창 띄우기
+        ImageManagerDialog dialog = new ImageManagerDialog(detailFrame, currentNovel.getTitle(), currentNovel.getFolderPath());
+        dialog.setVisible(true);
     }
 }

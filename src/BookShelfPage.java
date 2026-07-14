@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.io.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -34,8 +35,21 @@ public class BookShelfPage{
 
     private JButton btnMyLibrary;
 
+    // 현재 선택된 좌측 메뉴 상태를 추적할 플래그 변수
+    private String currentMenuState = "ALL";
+
+    // 단편/썰 전용 컴포넌트
+    private JButton btnShortStoryLibrary;   //단편/썰 목록 버튼
+    private ShortStoryPanel shortStoryPanel;    //신설할 독립 클래스 패널
+
+    private JButton btnParodyLibrary;   // 패러디 서재 전용
+    private ParodyPanel parodyPanel;
+
     //현재 선택된 좌측 메뉴 상태를 추적할 플래그 변수
-    private String currentMenu = "내 서재";
+    public String currentMenu = "내 서재";
+
+    private String currentStatusTab = "전체";
+    private JButton btnTabAll, btnTabOngoing, btnTabCompleted, btnTabHiatus;
 
     public void openBookShelf(){
         //로컬 디렉터리 자동 생성 가드
@@ -45,18 +59,23 @@ public class BookShelfPage{
             File novelsDir = new File("C:\\novel\\novels");
             File coversDir = new File("C:\\novel\\covers");
 
-            if(!baseDir.exists()){
-                baseDir.mkdirs();       //C 드라이브에 novel 폴더가 없으면 자동 생성
-            }
-            if(!iconDir.exists()){
-                iconDir.mkdirs();       // novel 폴더에 로고 아이콘용 icon 폴더가 없으면 자동 생성
-            }
-            if (!novelsDir.exists()){
-                novelsDir.mkdirs();
-            }
-            if (!coversDir.exists()){
-                coversDir.mkdirs();
-            }
+            // 장편/단편,썰/패러디 분류
+            String baseRoot = "C:\\novel\\novels\\";
+            File novelListDir = new File(baseRoot + "novel_list");
+            File shortStoriesDir = new File(baseRoot + "short_stories");
+            File parodiesDir = new File(baseRoot + "parodies");
+
+            // 디렉터리 스캔 후 부재 시 일괄 연쇄 자동 생성 가드
+            if(!baseDir.exists()){ baseDir.mkdirs(); } //C 드라이브에 novel 폴더가 없으면 자동 생성
+            if(!iconDir.exists()){ iconDir.mkdirs(); }  // novel 폴더에 로고 아이콘용 icon 폴더가 없으면 자동 생성
+            if(!coversDir.exists()){ coversDir.mkdirs(); } //cover 폴더가 없으면 생성
+
+            //사용자 투입 및 자동 생성 전용 자식 폴더 인프라 장착
+            if(!novelListDir.exists()) novelListDir.mkdirs();
+            if(!shortStoriesDir.exists()) shortStoriesDir.mkdirs();
+            if(!parodiesDir.exists()) parodiesDir.mkdirs();
+
+            System.out.println("[시스템] 3대 보관 구역 폴더 무결성 검사 및 동기화 완료.");
         } catch(Exception e){
             System.out.println("디렉터리 선행 생성 실패: "+ e.getMessage());
         }
@@ -66,7 +85,7 @@ public class BookShelfPage{
         //1. 메인 창 생성
         mainFrame = new JFrame("모던 웹소설 보관함 v2026.1.1");
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        mainFrame.setSize(1150, 650); //가로가 세로보다 크게
+        mainFrame.setSize(1250, 740); //가로가 세로보다 크게
         mainFrame.setLocationRelativeTo(null);
 
         //메인 창의 레이아웃을 BorderLayout(상하좌우 분할)으로 설정
@@ -94,12 +113,15 @@ public class BookShelfPage{
         //상하좌우 여백주기
         lblMenuTitle.setBorder(BorderFactory.createEmptyBorder(35, 20, 25, 20));
 
+        //보관함 버트
         btnMyLibrary = new JButton("내 서재");
         JButton btnMyFavorites = new JButton("좋아요");
         JButton btnSettings = new JButton("환경 설정");
+        btnShortStoryLibrary = new JButton("단편/썰 서재");
+        btnParodyLibrary = new JButton("패러디 서재");
 
         //버튼 내부의 아이콘 그래픽을 직접 드로잉
-        JButton[] menuButtons = {btnMyLibrary, btnMyFavorites, btnSettings};
+        JButton[] menuButtons = {btnMyLibrary, btnMyFavorites, btnShortStoryLibrary, btnParodyLibrary, btnSettings};
         for(JButton btn : menuButtons){
             btn.setAlignmentX(Component.CENTER_ALIGNMENT);
             btn.setPreferredSize(new Dimension(170, 42));   //버튼 크기 최적화 수치 갱신
@@ -174,6 +196,30 @@ public class BookShelfPage{
 
                         g2.draw(heart);
 
+                    } else if(btnText.equals("단편/썰 서재")){
+                        //뒤쪽 종이 효과
+                        g2.drawRoundRect(22, 14, 14, 16, 3, 3);
+                        //앞쪽 겹쳐진 종이 효과
+                        g2.setColor(c.getBackground());
+                        g2.fillRect(17, 18, 14, 16);
+                        if(b.getForeground().getGreen() > 100){
+                            g2.setColor(new Color(0, 140, 140));
+                        } else{
+                            g2.setColor(new Color(140, 145, 155));
+                        }
+                        g2.drawRoundRect(17, 18, 14, 16, 3, 3);
+                        //종이 내부 줄무늬 텍스트 선 묘사
+                        g2.setStroke(new BasicStroke(1.5f));
+                        g2.drawLine(21, 23, 27, 23);
+                        g2.drawLine(21, 27, 25, 27);
+
+                    } else if(btnText.equals("패러디 서재")){
+                        g2.drawRoundRect(16, 14, 15, 17, 2, 2);
+                        g2.drawLine(20, 20, 27, 20);
+                        g2.drawLine(20, 24, 25, 24);
+                        //대각선 깃펜 촉 묘사
+                        g2.setStroke(new BasicStroke(2.0f));
+                        g2.drawLine(28, 26, 34, 15);
                     } else if(btnText.equals("환경 설정")) {
                         //톱니바퀴 모양 아이콘 컴팩트 드로잉
                         int centerX = 28;
@@ -213,8 +259,14 @@ public class BookShelfPage{
             btnMyLibrary.setBackground(new Color(230, 245, 245));   //옅은 청록색 하이라이트
             btnMyLibrary.setForeground(new Color(0, 140, 160)); //청록색
 
+            btnShortStoryLibrary.setBackground(Color.WHITE);
+            btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
+
             btnMyFavorites.setBackground(Color.WHITE); //초기화
             btnMyFavorites.setForeground(new Color(80, 85, 95));
+
+            btnParodyLibrary.setBackground(Color.WHITE);
+            btnParodyLibrary.setForeground(new Color(80, 85, 95));
 
             btnSettings.setBackground(Color.WHITE);
             btnSettings.setForeground(new Color(80, 85, 95));
@@ -235,6 +287,13 @@ public class BookShelfPage{
 
             btnMyLibrary.setBackground(Color.WHITE);       //초기화
             btnMyLibrary.setForeground(new Color(80, 85, 95));
+
+            btnShortStoryLibrary.setBackground(Color.WHITE);
+            btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
+
+            btnParodyLibrary.setBackground(Color.WHITE);
+            btnParodyLibrary.setForeground(new Color(80, 85, 95));
+
             btnSettings.setBackground(Color.WHITE);
             btnSettings.setForeground(new Color(80, 85, 95));
 
@@ -254,6 +313,13 @@ public class BookShelfPage{
 
             btnMyLibrary.setBackground(Color.WHITE);
             btnMyLibrary.setForeground(new Color(80, 85, 95));
+
+            btnShortStoryLibrary.setBackground(Color.WHITE);
+            btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
+
+            btnParodyLibrary.setBackground(Color.WHITE);
+            btnParodyLibrary.setForeground(new Color(80, 85, 95));
+
             btnMyFavorites.setBackground(Color.WHITE);
             btnMyFavorites.setForeground(new Color(80, 85, 95));
 
@@ -262,6 +328,44 @@ public class BookShelfPage{
 
             //대시보드 및 환경설정이 꽂혀있는 독립 설정카드로 화면 전환
             cardLayout.show(cardsContainer, "SETTINGS_CARD");
+        });
+
+        btnParodyLibrary.addActionListener(e -> {
+            currentMenu = "패러디 서재";
+            btnParodyLibrary.setBackground(new Color(230, 245, 245));
+            btnParodyLibrary.setForeground(new Color(0, 140, 160));
+
+            btnMyLibrary.setBackground(Color.WHITE); btnMyLibrary.setForeground(new Color(80, 85, 95));
+            btnMyFavorites.setBackground(Color.WHITE); btnMyFavorites.setForeground(new Color(80, 85, 95));
+            btnShortStoryLibrary.setBackground(Color.WHITE); btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
+            btnSettings.setBackground(Color.WHITE); btnSettings.setForeground(new Color(80, 85, 95));
+
+            //독립 커스텀 패널 화면 노출 및 리프레시 엔진 구동
+            cardLayout.show(cardsContainer, "PARODY_CARD");
+            parodyPanel.refreshParodyLibrary();
+        });
+
+        //단편/썰 서재 버튼 리스너
+        btnShortStoryLibrary.addActionListener(e -> {
+            currentMenu = "단편/썰 서재";
+            btnShortStoryLibrary.setBackground((new Color(230, 245, 245)));
+            btnShortStoryLibrary.setForeground(new Color(0, 140, 160));
+
+            btnMyLibrary.setBackground(Color.WHITE);
+            btnMyLibrary.setForeground(new Color(80, 85, 95));
+
+            btnMyFavorites.setBackground(Color.WHITE);
+            btnMyFavorites.setForeground(new Color(80, 85, 95));
+
+            btnParodyLibrary.setBackground(Color.WHITE);
+            btnParodyLibrary.setForeground(new Color(80, 85, 95));
+
+            btnSettings.setBackground(Color.WHITE);
+            btnSettings.setForeground(new Color(80, 85, 95));
+
+            //독립 커스텀 패널 화면 노출 및 렌더링 동기화 호출
+            cardLayout.show(cardsContainer, "SHORT_STORY_CARD");
+            shortStoryPanel.refreshShortStoryLibrary();
         });
 
 
@@ -280,6 +384,10 @@ public class BookShelfPage{
         menuWrapperPanel.add(btnMyLibrary);
         menuWrapperPanel.add(Box.createVerticalStrut(8));       //버튼 사이의 물리 간격 단정화
         menuWrapperPanel.add(btnMyFavorites);
+        menuWrapperPanel.add(Box.createVerticalStrut(8));
+        menuWrapperPanel.add(btnShortStoryLibrary);
+        menuWrapperPanel.add(Box.createVerticalStrut(8));
+        menuWrapperPanel.add(btnParodyLibrary);
         menuWrapperPanel.add(Box.createVerticalStrut(8));
         menuWrapperPanel.add(btnSettings);
 
@@ -481,7 +589,7 @@ public class BookShelfPage{
         JPanel searchContainer = new JPanel(new BorderLayout(6, 0));    //검색창과 버튼 사이에 마진 6px 확보
         searchContainer.setBackground(Color.WHITE); //보관함 배경색에 맞게 조율
 
-        searchField = new JTextField("제목 검색...", 12){
+        searchField = new JTextField("제목, 작가, 태그 검색...", 12){
             @Override
             protected void paintComponent(Graphics g){
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -528,7 +636,7 @@ public class BookShelfPage{
         searchField.addFocusListener(new java.awt.event.FocusListener(){
             @Override
             public void focusGained(java.awt.event.FocusEvent e){
-                if(searchField.getText().equals("제목 검색...")){
+                if(searchField.getText().equals("제목, 작가, 태그 검색...")){
                     searchField.setText("");
                     searchField.setForeground(Color.BLACK);
                 }
@@ -540,7 +648,7 @@ public class BookShelfPage{
             public void focusLost(java.awt.event.FocusEvent e){
                 if(searchField.getText().trim().isEmpty()){
                     searchField.setForeground(Color.GRAY);
-                    searchField.setText("제목 검색...");
+                    searchField.setText("제목, 작가, 태그 검색...");
                     btnCancelSearch.setVisible(false);
                     searchContainer.revalidate();
                     searchContainer.repaint();
@@ -553,7 +661,7 @@ public class BookShelfPage{
 
         btnCancelSearch.addActionListener(e -> {
             searchField.setForeground(Color.GRAY);
-            searchField.setText("제목 검색...");
+            searchField.setText("제목, 작가, 태그 검색...");
             refreshLibrary();   //필터 원상복구
             btnCancelSearch.setVisible(false);
             searchContainer.revalidate();
@@ -632,7 +740,7 @@ public class BookShelfPage{
                 Point origin = lblSearchInfo.getLocationOnScreen();
 
                 //X축: 아이콘 정중앙 점핑 후 팝업창 절반 크기만큼 좌측으로 백업
-                int targetX = origin.x + (lblSearchInfo.getWidth() / 2) - (tipWindow.getWidth() / 2);
+                int targetX = origin.x + lblSearchInfo.getWidth() - tipWindow.getWidth();
                 // Y축: 아이콘 아래로 22픽셀 낙하
                 int targetY = origin.y + lblSearchInfo.getHeight() + 4;
 
@@ -719,7 +827,7 @@ public class BookShelfPage{
         gridWrapper.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 
         JPanel innerAlignPanel = new JPanel(new BorderLayout());
-        innerAlignPanel.setBackground(Color.WHITE);
+        innerAlignPanel.setBackground(new Color(248, 250, 252));
         innerAlignPanel.add(libraryGridPanel, BorderLayout.WEST);
 
         gridWrapper.add(innerAlignPanel, BorderLayout.NORTH);
@@ -732,7 +840,31 @@ public class BookShelfPage{
 
         libraryScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        libraryContentPanel.add(toolbarPanel, BorderLayout.NORTH);
+        JPanel topWrapperPanel = new JPanel(new BorderLayout());
+        topWrapperPanel.setBackground(Color.WHITE);
+        topWrapperPanel.add(toolbarPanel, BorderLayout.NORTH);
+
+        JPanel statusBarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        statusBarPanel.setBackground(Color.WHITE);
+        statusBarPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(0, 15, 0, 25),
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230))
+        ));
+
+        btnTabAll = createTabButton("전체");
+        btnTabOngoing = createTabButton("연재중");
+        btnTabCompleted = createTabButton("완결");
+        btnTabHiatus = createTabButton("연재중단");
+        updateTabStyles();
+
+        statusBarPanel.add(btnTabAll);
+        statusBarPanel.add(btnTabOngoing);
+        statusBarPanel.add(btnTabCompleted);
+        statusBarPanel.add(btnTabHiatus);
+
+        topWrapperPanel.add(statusBarPanel, BorderLayout.SOUTH);
+        libraryContentPanel.add(topWrapperPanel, BorderLayout.NORTH);
+
         libraryContentPanel.add(libraryScrollPane, BorderLayout.CENTER);
 
         //환경 설정 본체 가상 도화지 패널 개설
@@ -742,6 +874,12 @@ public class BookShelfPage{
         //카드 보드 컨테이너 상자에 2개의 메인 화면 분기 트랙을 도킹
         cardsContainer.add(libraryContentPanel, "LIBRARY_CARD");
         cardsContainer.add(settingsPanel, "SETTINGS_CARD");
+
+        shortStoryPanel = new ShortStoryPanel(mainFrame, this);
+        cardsContainer.add(shortStoryPanel, "SHORT_STORY_CARD");
+
+        parodyPanel = new ParodyPanel(mainFrame, this);
+        cardsContainer.add(parodyPanel, "PARODY_CARD");
 
         //빈 바탕화면이나 카드 스크롤 영역 클릭 시 검색창 커서 안뜨게
         //우측 메인 패널이 검색창의 포커스를 뺏게 주권 자격 부여
@@ -802,58 +940,13 @@ public class BookShelfPage{
         mainFrame.setVisible(true);
     }
 
-    //환경 설정 메뉴 클릭 시 실시간 통계 연산 및 3대 탭 UI를 인쇄하는 컨트롤러 엔진
+    //환경 설정 메뉴 클릭
     private void updateSettingsPanel(){
         settingsPanel.removeAll();
 
         // 전체 패딩 마진 부여 및 레이아웃 정의
         settingsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         settingsPanel.setLayout(new BorderLayout(0, 15));
-
-        //실시간 통계 및 기록 산출을 위한 다차원 전수 조사 연산
-        int totalWorks = novelList.size();      //등록된 전체 작품 수
-        int completedWorks = 0;                 //완독(완결까지 다 읽은) 작품 수
-        int ongoingWorks = 0;                   //덜 읽은(독서 진행 중) 작품 수
-
-        for(Novel novel : novelList) {
-            int totalCh = 0;
-            int currentCh = 1;
-
-            //[A] 해당 소설 폴더 안의 실제 텍스트 파일 총 개수(분모) 파악
-            File dir = new File(novel.getFolderPath());
-            if (dir.exists() && dir.isDirectory()) {
-                File[] files = dir.listFiles((d, name) -> {
-                    String lower = name.toLowerCase();
-                    return lower.endsWith(".txt")
-                            && !lower.equals("bookmark.txt")
-                            && !lower.equals("memo_bookmarks.txt")
-                            && !lower.startsWith("summary_notes");
-                });
-                if (files != null) totalCh = files.length;
-            }
-
-
-
-            //[B] bookmark.txt 파일 분석을 통한 현재 열람 회차 파악
-            File bookmarkFile = new File(novel.getFolderPath() + File.separator + "bookmark.txt");
-            if (bookmarkFile.exists()) {
-                try (BufferedReader br = new BufferedReader(new FileReader(bookmarkFile))) {
-                    String line = br.readLine();
-                    if (line != null) currentCh = Integer.parseInt(line.trim());
-                } catch (Exception e) {
-                    currentCh = 1;
-                }
-            }
-
-            if (totalCh == 0) totalCh = 1;   //기록 없음 방지용 예외 가드
-
-            //[C] 완독 여부 정밀 판별 분기(현재 열람 회차가 총 파일 개수와 같고, 아예 안 읽은 상태가 아닐 때
-            if (currentCh >= totalCh && !novel.getLastReadDate().equals("기록 없음")) {
-                completedWorks++;       //목록 전체를 다 읽은 작품 카운트 누적
-            } else {
-                ongoingWorks++;         //아직 덜 읽은 작품 카운트 누적
-            }
-        }
 
         //임시 변경 사항을 격리 보관할 설정 버퍼 변수
         final String[] tempTheme = { AppSettings.getInstance().getDefaultTheme() };
@@ -1587,21 +1680,48 @@ public class BookShelfPage{
 
         //데이터 마스터 초기화 비지니스 로직 연동
         btnClearLink.addActionListener(e -> {
-            int chk1 = JOptionPane.showConfirmDialog(mainFrame,
-                    "정말로 보관함에 등록된 전체 작품 데이터를 삭제하시겠습니까?\n(실제 소설 텍스트 파일은 안전하게 보존됩니다)",
-                    "최종 경고", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-            if(chk1 == JOptionPane.YES_OPTION){
-                int chk2 = JOptionPane.showConfirmDialog(mainFrame,
-                        "삭제된 데이터는 절대 복구할 수 없습니다. 정말 진행할까요?",
-                        "마스터 데이터 포켓 확인", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                if(chk2 == JOptionPane.YES_OPTION){
-                    novelList.clear();
-                    saveLibraryData();
-                    JOptionPane.showMessageDialog(mainFrame, "전체 작품 초기화 공정이 완료되었습니다.",
-                            "알림", JOptionPane.INFORMATION_MESSAGE);
-                    btnMyLibrary.doClick();
+
+            // 1. 서재 선택 팝업 창 생성
+            JDialog selectDialog = new JDialog(mainFrame, "초기화할 서재 선택", true);
+            selectDialog.setLayout(new GridLayout(3, 1, 10, 10));
+            selectDialog.setSize(300, 200);
+            selectDialog.setLocationRelativeTo(mainFrame);
+            selectDialog.getContentPane().setBackground(Color.WHITE);
+
+            JLabel lblMsg = new JLabel("어떤 서재의 데이터를 초기화하시겠습니까?", SwingConstants.CENTER);
+            lblMsg.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            selectDialog.add(lblMsg);
+
+            JButton btnDelMy = new JButton("내 서재");
+            JButton btnDelParody = new JButton("패러디 서재");
+
+            // 초기화 공통 로직
+            java.util.function.Consumer<String> performReset = (type) -> {
+                int confirm = JOptionPane.showConfirmDialog(selectDialog,
+                        type + "의 프로그램 내 기록을 삭제하시겠습니까?\n(실제 소설 텍스트 파일은 안전하게 보존됩니다)",
+                        "확인", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    if (type.equals("내 서재")) {
+                        novelList.clear();
+                        saveLibraryData();
+                        refreshLibrary();
+                    } else if (type.equals("패러디 서재")) {
+                        new File("C:\\novel\\parody_data.txt").delete();
+                        if(parodyPanel != null) parodyPanel.clearAllData();
+                    }
+                    JOptionPane.showMessageDialog(selectDialog, type + " 데이터가 초기화되었습니다.");
+                    selectDialog.dispose();
                 }
-            }
+            };
+
+            btnDelMy.addActionListener(ev -> performReset.accept("내 서재"));
+            btnDelParody.addActionListener(ev -> performReset.accept("패러디 서재"));
+
+            selectDialog.add(btnDelMy);
+            selectDialog.add(btnDelParody);
+
+            selectDialog.setVisible(true);
         });
 
         //[우측 최하단]: 설정 적용 버튼
@@ -1645,27 +1765,9 @@ public class BookShelfPage{
         //일반 설정 탭 본문 최하단에 레이아웃 최종 배치
         tabGeneral.add(rowFinalAction);
 
-        // 탭[2]: 대시보드 통계 UI 렌더링
-        JPanel tabStatistics = new JPanel(new BorderLayout());
-        tabStatistics.setBackground(Color.WHITE);
-        tabStatistics.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
-
-        //진척도 데이터 실시간 시각 가독성 래핑
-        JLabel lblStatCenter = new JLabel("<html><body>" +
-                "<h2 style='color:#0078E6;'>📈 <b>독서 진척도 상태 보고서</b></h2><br>" +
-                "<p style='font-size:13px; font-family:맑은 고딕; line-height:2.0;'>" +
-                "  • 🏆 <b>목록 전체를 완독한 작품 수:</b>&nbsp;&nbsp;<font color='green'><b>" + completedWorks + "개</b></font><br>" +
-                "  • ⏳ <b>현재 덜 읽은 작품 수:</b>&nbsp;&nbsp;<font color='#FF7800'><b>" + ongoingWorks + "개</b></font><br>" +
-                "  • 📚 <b>보관함에 등록된 전체 작품 수:</b>&nbsp;&nbsp;<b>" + totalWorks + "개</b>" +
-                "</p>" +
-                "</body></html>");
-        lblStatCenter.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
-        lblStatCenter.setVerticalAlignment(SwingConstants.TOP);
-        tabStatistics.add(lblStatCenter, BorderLayout.CENTER);
 
         //종합 패킹 및 뷰 포트 화면 출력 발사]
         tabbedPane.addTab("일반 설정", tabGeneral);
-        tabbedPane.addTab("대시보드: 통계", tabStatistics);
 
         settingsPanel.add(tabbedPane, BorderLayout.CENTER);
         settingsPanel.revalidate();
@@ -1675,19 +1777,25 @@ public class BookShelfPage{
     //[핵심 필터링/정렬 메소드] : 상단 조작 상태에 따라 화면을 실시간 클리닝 및 동적 카드 재구성
     // + 외부 클래스에서 제어할 수 있도록 접근 권한을 public으로 바꿈
     public void refreshLibrary(){
+
+        if("패러디 서재".equals(this.currentMenu) && parodyPanel != null){
+            parodyPanel.refreshParodyLibrary();
+        }
         if(libraryGridPanel == null) return;
 
-        //1. 상단 컨트롤러들의 현재 선태 상태 값 출력
+        //상단 컨트롤러들의 현재 선태 상태 값 출력
         String selectedPlatform = (platformCombo != null) ? (String) platformCombo.getSelectedItem() : "전체 플랫폼";
         String selectedSort = (sortCombo != null) ? (String) sortCombo.getSelectedItem() : "최근 읽은 순";
         String searchText = (searchField != null) ? searchField.getText() : "";
 
-        //2. 화면 청소 및 초기화
+        //화면 청소 및 초기화
         libraryGridPanel.removeAll();
         cardCount = 0;
 
-        //3. 필터링 대상 조건 선별 취합(접두사 기호 기반 검색 인프라 빌드)
-        ArrayList<Novel> filteredList = new ArrayList<>();
+        //1. 기존 조건(플랫폼, 검색어, 좌측 메뉴)을 먼저 통과한 기초 데이터를 수집하고 산출
+        ArrayList<Novel> baseFilteredList = new ArrayList<>();
+        int countAll = 0, countOngoing = 0, countCompleted = 0, countHiatus = 0;
+
         for(Novel novel : novelList){
             //[A] 플랫폼 필터 검사
             boolean matchesPlatform = selectedPlatform.equals("전체 플랫폼") || novel.getPlatform().contains(selectedPlatform);
@@ -1696,17 +1804,16 @@ public class BookShelfPage{
             boolean matchesSearch = true;
             String userQuery = searchText.trim().toLowerCase();
 
-            if(!userQuery.isEmpty() && !userQuery.equals("제목 검색...")){
+            if(!userQuery.isEmpty() && !userQuery.equals("제목, 작가, 태그 검색...")){
                 // case1 : 샵(#) 기호가 있으면 [키워드 검색 모드] 가동
                 if(userQuery.contains("#")){
                     String[] tokens = userQuery.split("\\s+");      //공백 단위로 먼저 분할
                     String novelKeywords = novel.getKeywords() != null ? novel.getKeywords().toLowerCase() : "";
-
                     for(String token : tokens){
                         if(token.startsWith("#") && token.length() > 1){
                             String cleanKey = token.substring(1).replace(",", "").trim();   //'#'기호 제거 및 쉼표 제거
                             if(!cleanKey.isEmpty() && !novelKeywords.contains(cleanKey)){
-                                matchesSearch = false;      //하나라도 포함 안 ㄷ뇌면 탈락(AND 연산)
+                                matchesSearch = false;      //하나라도 포함 안 되면 탈락(AND 연산)
                                 break;
                             }
                         }
@@ -1762,43 +1869,49 @@ public class BookShelfPage{
                         try(BufferedReader br = new BufferedReader(new FileReader(bookmarkFile))){
                             String line = br.readLine();
                             if(line != null) currentCh = Integer.parseInt(line.trim());
-                        } catch (Exception e) { currentCh = 1; }
+                        } catch (Exception e) {}
                     }
-                    if(totalCh == 0) totalCh = 1;
-
                     //현재 읽은 위치(currentCh)가 총 파일 수(totalCh)보다 '덜 읽은 작품'만 필터망에 통과
                     matchesMenu = (currentCh < totalCh);
                 }
             }
-            else{
-                matchesMenu = true;
-            }
 
-            //필터 조건이 모두 일치하는 소설만 최종 바구니에 수집
+            // 1차 필터망 통과 객체 수집 및 탭 전용 카운팅
             if(matchesPlatform && matchesSearch && matchesMenu){
-                filteredList.add(novel);
+                baseFilteredList.add(novel);
+                countAll++;
+                if(novel.isCompleted()) countCompleted++;
+                else if(novel.isHiatus()) countHiatus++;
+                else countOngoing++;
             }
         }
 
-        //최종 필터링이 끝난 filteredList.size() 개수를 라벨에 실시간 매핑 주입
+        // 2. 탭UI 텍스트에 실시간 통계 수치 반영
+        if(btnTabAll != null) btnTabAll.setText("전체 (" + countAll + ")");
+        if(btnTabOngoing != null) btnTabOngoing.setText("연재중 (" + countOngoing + ")");
+        if(btnTabCompleted != null) btnTabCompleted.setText("완결 (" + countCompleted + ")");
+        if(btnTabHiatus != null) btnTabHiatus.setText("연재중단 (" + countHiatus + ")");
+
+        // 3. 현재 선택된 탭 상태를 기준으로 2차 최종 필터링
+        ArrayList<Novel> finalFilteredList = new ArrayList<>();
+        for(Novel novel : baseFilteredList) {
+            boolean matchesTab = true;
+            if (currentStatusTab.equals("완결")) matchesTab = novel.isCompleted();
+            else if (currentStatusTab.equals("연재중단")) matchesTab = novel.isHiatus();
+            else if (currentStatusTab.equals("연재중")) matchesTab = !novel.isCompleted() && !novel.isHiatus();
+
+            if (matchesTab) finalFilteredList.add(novel);
+        }
+        // 4. 좌측 상단 총 카운터 라벨 동기화
         if(lblTotalCounter != null){
-            if(currentMenu.equals("좋아요")){
-                lblTotalCounter.setText("좋아요 작품: " + filteredList.size() + "개");
-            } else{
-                if(selectedSort.equals("안 읽은 작품")){
-                    lblTotalCounter.setText("안 읽은 작품: " + filteredList.size() + "개");
-                } else {
-                    lblTotalCounter.setText("전체 작품: " + filteredList.size() + "개");
-                }
-            }
+            lblTotalCounter.setText("작품 수: " + finalFilteredList.size() + "개");
         }
 
-        //4. 지정된 정렬 소트 알고리즘 실행
+        // 5. 정렬 알고리즘
         if(selectedSort.equals("좋아요 순")){
-            // 좋아요 타임스탬프 값을 비교하여 최신 시각이 무조건 맨 앞으로 오게 정렬
-            Collections.sort(filteredList, (n1, n2) -> Long.compare(n2.getFavoriteTimestamp(), n1.getFavoriteTimestamp()));
+            Collections.sort(finalFilteredList, (n1, n2) -> Long.compare(n2.getFavoriteTimestamp(), n1.getFavoriteTimestamp()));
         } else if(selectedSort.equals("최근 읽은 순") || selectedSort.equals("안 읽은 작품")){
-            Collections.sort(filteredList, (n1, n2) -> {
+            Collections.sort(finalFilteredList, (n1, n2) -> {
                 String d1 = n1.getLastReadDate();
                 String d2 = n2.getLastReadDate();
 
@@ -1810,11 +1923,11 @@ public class BookShelfPage{
             });
         }
         else if(selectedSort.equals("제목순")){
-            Collections.sort(filteredList, (n1, n2) -> n1.getTitle().compareTo(n2.getTitle()));
+            Collections.sort(finalFilteredList, (n1, n2) -> n1.getTitle().compareTo(n2.getTitle()));
         }
 
-        //5. 정제 완료된 소설 카드들만 가나다/최신순/미완독 정렬에 매핑하여 서재에 노출
-        for(Novel novel : filteredList){
+        //6. 정제 완료된 소설 카드들만 가나다/최신순/미완독 정렬에 매핑하여 서재에 노출
+        for(Novel novel : finalFilteredList){
             addNovelCard(novel);
         }
 
@@ -1824,6 +1937,7 @@ public class BookShelfPage{
 
     //Novel 데이터를 기반으로 화면에 카드를 그리는 메서드
     private void addNovelCard(Novel novel){
+        // 1. 카드 배경 투명화 및 외곽선 제거
         JPanel card = new JPanel(){
             @Override
             protected void paintComponent(Graphics g){
@@ -1857,18 +1971,20 @@ public class BookShelfPage{
 
         //투명도 속성을 켜줘야 paintComponent로 그린 라운딩 바깥 영역이 부모 배경과 투명과 동기화됨
         card.setOpaque(false);
-        card.setBackground(Color.WHITE);
+        card.setBackground(new Color(0, 0, 0, 0));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        //카드 메인 배치를 위에서 아래로 쌓는 BoxLayout으로 통일
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setPreferredSize(new Dimension(210, 340));
-        card.setMaximumSize(new Dimension(210, 340));   //카드 전체 컨테이너 규격 고정
+        // 카드 규격
+        card.setPreferredSize(new Dimension(190, 325));
+        card.setMaximumSize(new Dimension(190, 325));   //카드 전체 컨테이너 규격 고정
 
         //마우스 커서를 손가락 모양으로 바꾸어 클릭 가능한 느낌 주기
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        //1. 이미지 표시 및 그래픽스 스케일링 엔진 세팅 (ImageIO 사용)
+        //2. 이미지 표시 및 그래픽스 스케일링 엔진
+        int targetWidth = 166;
+        int targetHeight = 170;
+
         JLabel lblCover = new JLabel(){
             @Override
             protected void paintComponent(Graphics g){
@@ -1905,15 +2021,40 @@ public class BookShelfPage{
                     g2.dispose();
                 }
                 super.paintComponent(g);
+
+                //표지 좌측 상단에 상태 오버레이 배지 드로잉(완결/연재중단)
+                if(novel.isCompleted() || novel.isHiatus()){
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    boolean isComp = novel.isCompleted();
+                    String badgeText = isComp ? "완결" : "연재중단";
+                    Color badgeColor = isComp ? new Color(0, 160, 120) : new Color(255, 120, 0);
+                    int badgeWidth = isComp ? 44 : 60;
+
+                    //그림자 효과
+                    g2.setColor(new Color(0, 0, 0, 30));
+                    g2.fillRoundRect(9, 9, badgeWidth, 22, 6, 6);
+
+                    //배지 배경
+                    g2.setColor(badgeColor);
+                    g2.fillRoundRect(8, 8, badgeWidth, 22, 6, 6);
+
+                    //배지 텍스트 렌더링 및 중앙 정렬
+                    g2.setColor(Color.WHITE);
+                    g2.setFont(new Font("맑은 고딕", Font.BOLD, 11));
+
+                    FontMetrics fm = g2.getFontMetrics();
+                    int textX = 8 + (badgeWidth - fm.stringWidth(badgeText)) / 2;
+                    int textY = 8 + ((22 - fm.getHeight()) / 2) + fm.getAscent();
+                    g2.drawString(badgeText, textX, textY);
+
+                    g2.dispose();
+                }
             }
         };
         lblCover.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblCover.setHorizontalAlignment(SwingConstants.CENTER);
-
-        int targetWidth = 182;
-        int targetHeight = 210;
-
-        //박스 높이에 맞게 빈 상자 바운더리 마진 확보
         lblCover.setPreferredSize(new Dimension(targetWidth, targetHeight));
         lblCover.setMaximumSize(new Dimension(targetWidth, targetHeight));
 
@@ -1927,7 +2068,7 @@ public class BookShelfPage{
                 int srcWidth = srcImg.getWidth(null);
                 int srcHeight = srcImg.getHeight(null);
 
-                double targetScale = Math.min((double) targetWidth / srcWidth, (double) targetHeight / srcHeight);
+                double targetScale = Math.max((double) targetWidth / srcWidth, (double) targetHeight / srcHeight);
                 int scaledWidth = (int) (srcWidth * targetScale);
                 int scaledHeight = (int) (srcHeight * targetScale);
 
@@ -1945,10 +2086,19 @@ public class BookShelfPage{
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
-                //보정된 비율로 도화지에 인쇄
+                // 표지 상단 모서리만 둥글게 클리핑 처리(하단은 그라데이션으로 덮이므로 여유 마진 부여)
+                g2.setClip(new RoundRectangle2D.Float(0, 0, targetWidth, targetHeight, 14, 14));
                 g2.drawImage(srcImg, x, y, scaledWidth, scaledHeight, null);
+
+                // 표지 하단에 자연스러운 그라데이션 페이드아웃 효과 적용
+                GradientPaint fade = new GradientPaint(
+                        0, targetHeight - 60, new Color(255, 255, 255, 0),  // 하단 60px 위부터 투명하게 시작
+                        0, targetHeight, Color.WHITE    //맨 밑바닥은 완전한 불투명 흰색
+                );
+                g2.setPaint(fade);
+                g2.fillRect(0, targetHeight - 60, targetWidth, 60);
+
                 g2.dispose();
 
                 lblCover.setIcon(new ImageIcon(resizedImg));
@@ -1967,47 +2117,39 @@ public class BookShelfPage{
             lblCover.setIconTextGap(10);    //아이콘과 글자 사이의 안전 격리 마진
         }
 
-        //이미지 상단 여백 추가
-        JPanel coverWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 12));
+        //이미지 상단 여백 제거
+        JPanel coverWrapper = new JPanel(new BorderLayout());
         coverWrapper.setOpaque(false);
-        coverWrapper.setPreferredSize(new Dimension(210, 224));
-        coverWrapper.setMaximumSize(new Dimension(210, 224));   //최대 높이 완화
-        coverWrapper.add(lblCover);
+        coverWrapper.setBorder(BorderFactory.createEmptyBorder(12, 12, 0, 12));
+        coverWrapper.setPreferredSize(new Dimension(190, targetHeight + 12));
+        coverWrapper.setMaximumSize(new Dimension(190, targetHeight + 12));   //최대 높이 완화
+        coverWrapper.add(lblCover, BorderLayout.CENTER);
         coverWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         //2. 텍스트 정보 표시 구역(제목, 작가, 플랫폼)
         JPanel infoPanel = new JPanel();
         infoPanel.setOpaque(false);
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(2, 14, 8, 14));
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 12)); //텍스트 좌우 여백 확보
         infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // 다중제목 <html> 태그를 활용하여 자동 줄바꿈
+        String displayTitle = novel.getTitle();
+        JLabel lblTitle = new JLabel("<html><body style='width: 160px; word-wrap: break-word; margin: 0; padding: 0; line-height: 1.1;'>" + displayTitle + "</body></html>");
+        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        lblTitle.setForeground(new Color(30, 35, 40));
+        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         //infoPanel이 세로 공간을 더 이상 임의로 흡수하여 여백을 벌리지 못하도록 최대 크기 고정 박스 처리
-        infoPanel.setPreferredSize(new Dimension(210, 115));
-        infoPanel.setMaximumSize(new Dimension(210, 115));
+        infoPanel.setPreferredSize(new Dimension(190, 145));
+        infoPanel.setMaximumSize(new Dimension(190, 145));
 
         //제목 구역 레이아웃 고도화
         JPanel titleContainerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
         titleContainerRow.setOpaque(false);
         titleContainerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        //카드 인프라 규격에 맞게 가로 해상도 한계선을 110으로 지정하여 스스로 말줄임표 처리 되도록 유도
-        String displayTitle = novel.getTitle();
-        if(displayTitle.length() > 11){
-            displayTitle = displayTitle.substring(0, 10) + "...";
-        }
-
-        JLabel lblTitle;
-        //해당 작품 객체가 완결 상태(true)가라면 제목 바로 옆 공간에 붉은색 완결 배지 라벨을 바인딩
-        if (novel.isCompleted()) {
-            //HTML 내부 결합 상태에서 제목 문자열 뒤에 붉은색 [완결] 배지를 강제 각인
-            lblTitle = new JLabel("<html><body>" + displayTitle + "<font color='#00A0A0'><b> [완결]</b></font></body></html>");
-        } else {
-            lblTitle = new JLabel("<html><body>" + displayTitle + "</body></html>");
-        }
-
-        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        //생성한 제목 라벨을 패널에 부착하여 화면에 출력되도록 연동
         titleContainerRow.add(lblTitle);
 
         // 장르ㆍ작가이름 조합 출력
@@ -2075,16 +2217,9 @@ public class BookShelfPage{
         int totalCh = 0;
         int currentCh = 1;
 
-        //실제 폴더 스캔 파일 개수 파악
         File dir = new File(novel.getFolderPath());
         if(dir.exists() && dir.isDirectory()){
-            File[] files = dir.listFiles((dir1, name) -> {
-                String lower = name.toLowerCase();
-                return lower.endsWith(".txt")
-                        && !lower.equals("bookmark.txt")
-                        && !lower.equals("memo_bookmarks.txt")
-                        && !lower.startsWith("summary_notes");
-            });
+            File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(".txt") && !name.contains("bookmark") && !name.startsWith("summary"));
             if(files != null) totalCh = files.length;
         }
 
@@ -2094,82 +2229,100 @@ public class BookShelfPage{
             try(BufferedReader br = new BufferedReader(new FileReader(bookmarkFile))){
                 String line = br.readLine();
                 if(line != null) currentCh = Integer.parseInt(line.trim());
-            } catch(Exception e){
-                currentCh = 1;
-            }
+            } catch(Exception e){}
         }
-
         if(totalCh == 0) totalCh = 1;       //분모 예외 처리
+        int percent = (int) ((double)currentCh / totalCh * 100);
+        if(percent > 100) percent = 100;
 
-        JLabel lblProgress = new JLabel(currentCh + " / " + totalCh);
-        lblProgress.setFont(new Font("맑은 고딕", Font.BOLD, 11));
-        lblProgress.setForeground(new Color(0, 140, 140));
+        // 2. 상단 텍스트 정보( 읽는 중 X / Y화 Z% )
+        JPanel progressTextRow = new JPanel(new BorderLayout());
+        progressTextRow.setOpaque(false);
+        progressTextRow.setMaximumSize(new Dimension(190, 20));
+        progressTextRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        //최근 열람일 표시 라벨
-        // + 정렬 연산은 초 단위 데이터를 사용하되, UI 카드 라벨은 년-월-일 만 출력
-        String displayDate = novel.getLastReadDate();
-        if(displayDate != null && displayDate.length() > 10){
-            displayDate = displayDate.substring(0, 10);
-        }
-        JLabel lblLastDate = new JLabel("최근 열람 " + displayDate);
-        lblLastDate.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
-        lblLastDate.setForeground(Color.GRAY);
+        String progressStr = (currentCh >= totalCh) ? "완독 " + totalCh + "화" : "읽는 중 " + currentCh + " / " + totalCh + "화";
+        JLabel lblProgressText = new JLabel(progressStr);
+        lblProgressText.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblProgressText.setForeground(currentCh >= totalCh ? new Color(0, 160, 160) : new Color(120, 125, 130));
 
-        //가로 행 안에서 글자 정렬 기준을 수직 중앙으로 지정
-        lblLastDate.setVerticalAlignment(SwingConstants.CENTER);
+        JLabel lblPercent = new JLabel(percent + "%");
+        lblPercent.setFont(new Font("맑은 고딕", Font.BOLD, 11));
+        lblPercent.setForeground(new Color(0, 140, 140));
 
-        //복합 하단 정렬 배치 패널(최근 열람일과 진척도를 한행에 가로 배치)
-        JPanel cardBottomRow = new JPanel(new BorderLayout());
-        cardBottomRow.setOpaque(false);
-        cardBottomRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        cardBottomRow.setPreferredSize(new Dimension(182, 20));
-        cardBottomRow.setMaximumSize(new Dimension(182, 20));
-        cardBottomRow.add(lblLastDate, BorderLayout.WEST);
-        cardBottomRow.add(lblProgress, BorderLayout.EAST);
+        progressTextRow.add(lblProgressText, BorderLayout.WEST);
+        progressTextRow.add(lblPercent, BorderLayout.EAST);
 
+        final int finalPercent = percent;
 
-        //로고와 책갈피 사이에 가로로 Swing 표준 구분선 컴포넌트 생성
-        JSeparator horizontalLine = new JSeparator(SwingConstants.HORIZONTAL);
-        horizontalLine.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));     //선 두께를 1로 고정
-        horizontalLine.setForeground(new Color(230, 232, 236)); //연회색 컬러
-        horizontalLine.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // 3. 커스텀 게이지바 드로잉
+        JPanel progressBar = new JPanel(){
+            @Override
+            protected void paintComponent(Graphics g){
+                super.paintComponent(g);
 
-        //정보 패널에 컴포넌트 세로 정렬 주입
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+                // 배경 바(연회색)
+                g2.setColor(new Color(230, 235, 240));
+                g2.fillRoundRect(0, 0, getWidth(), 4, 4, 4);
+
+                // 채원진 바 (청록색)
+                int fillWidth = (int) (getWidth() * (finalPercent / 100.0));
+                g2.setColor(new Color(0, 160, 160));
+                g2.fillRoundRect(0, 0, fillWidth, 4, 4, 4);
+                g2.dispose();
+            }
+        };
+        progressBar.setOpaque(false);
+        progressBar.setPreferredSize(new Dimension(190, 4));
+        progressBar.setMaximumSize(new Dimension(190, 4));
+        progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // infoPanel 조립부
         infoPanel.add(titleContainerRow);
-
         infoPanel.add(Box.createVerticalStrut(4));
         infoPanel.add(lblGenreAuthor);
-
         infoPanel.add(Box.createVerticalStrut(4));
         infoPanel.add(platformImageContainer);
 
         infoPanel.add(Box.createVerticalStrut(8));
-        infoPanel.add(horizontalLine);
-        infoPanel.add(Box.createVerticalStrut(8));
+        infoPanel.add(progressTextRow);
+        infoPanel.add(Box.createVerticalStrut(4));
+        infoPanel.add(progressBar);
 
-        infoPanel.add(cardBottomRow);
-
-        infoPanel.add(Box.createVerticalGlue());
-
-        //위에서 아래로 카드 컴포넌트 조립
         card.add(coverWrapper);
         card.add(infoPanel);
 
-        //소설 카드를 마우스로 클릭했을 때 상세 페이지 호출
+
         card.addMouseListener(new MouseAdapter() {
             @Override
+            public void mouseEntered(MouseEvent e) {
+                // 마우스 진입 시 배경색을 아주 미세하게 밝은 청록색으로 변경하여 활성 상태 강조
+                card.setBackground(new Color(245, 252, 252));
+                card.setOpaque(true);
+                card.repaint(); // 배경 변경사항 즉시 렌더링
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // 마우스 이탈 시 다시 투명한 상태로 복구
+                card.setBackground(new Color(0, 0, 0, 0));
+                card.repaint();
+            }
+
+            @Override
             public void mouseClicked(MouseEvent e) {
-                //상세 정보 및 회차 리스트 화면 객체 생성
                 NovelDetailPage detailPage = new NovelDetailPage();
-                detailPage.openDetailPage(novel , BookShelfPage.this);
+                detailPage.openDetailPage(novel, BookShelfPage.this);
             }
         });
 
         //GirdBagLayout 속성을 조작하여 1줄에 3개씩 배치되도록 좌표 인자를 동적 매핑
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = cardCount % 3;      //열 좌표(0, 1, 2 순환)
-        gbc.gridy = cardCount / 3;      //행 좌표(3개 찰 때마다 1씩 증가
+        gbc.gridx = cardCount % 4;      //열 좌표(0, 1, 2 순환)
+        gbc.gridy = cardCount / 4;      //행 좌표(3개 찰 때마다 1씩 증가
         gbc.anchor = GridBagConstraints.NORTHWEST;  //왼쪽 상단 고정 정렬
 
         gbc.fill = GridBagConstraints.NONE;
@@ -2205,13 +2358,17 @@ public class BookShelfPage{
                         novel.getLastReadDate() + "|" +
                         novel.isFavorite() + "|" +
                         novel.isCompleted() + "|" +
-                        novel.getCreatedDate();
+                        novel.getCreatedDate() + "|" +
+                        novel.isHiatus();
                 bw.write(line);
                 bw.newLine();
             }
-            System.out.println("최근 열람일 영구 세이브 동기화 성공");
         } catch(IOException e){
             System.out.println("보관함 데이터 저장 실패: " + e.getMessage());
+        }
+
+        if(parodyPanel != null){
+            parodyPanel.saveParodyMetadata();
         }
     }
 
@@ -2244,6 +2401,9 @@ public class BookShelfPage{
                     if(data.length >= 12){
                         novel.setCreatedDate(data[11]);
                     }
+                    if(data.length >= 13){
+                        novel.setHiatus(Boolean.parseBoolean(data[12]));
+                    }
 
                     novelList.add(novel);   //메모리 리스트에 로드
                     addNovelCard(novel);    //화면에 카드 출력
@@ -2258,7 +2418,9 @@ public class BookShelfPage{
 
     //상세 정보창에서 호출하여 메모리와 하드디스크에서 소설을 영구 제거하는 메서드
     public void deleteNovel(Novel novel){
-        if(novelList.remove(novel)){
+        if("패러디".equals(novel.getGenre()) && parodyPanel != null){
+            parodyPanel.deleteNovel(novel);  //패러디 서재로 삭제 로직 우회
+        } else if(novelList.remove(novel)){
             saveLibraryData();
             refreshLibrary();
         }
@@ -2266,7 +2428,19 @@ public class BookShelfPage{
 
     //상세창에서 작가 클릭 시 내 서재 메뉴 상태로 강제 복귀시키는 제어 인터페이스
     public void triggerMyLibraryMenu(){
-        this.currentMenu = "내 서재";
+        if("패러디 서재".equals(this.currentMenu)){
+            if(parodyPanel != null){
+                parodyPanel.loadParodyMetadata();   //파일에서 최신 기록 동기화
+            }
+        } else if("단편/썰 서재".equals(this.currentMenu)){
+            if(shortStoryPanel != null){
+                shortStoryPanel.refreshShortStoryLibrary();
+            }
+        } else{
+            this.currentMenu = "내 서재";
+            loadLibraryData();  //파일에서 최신 기록 동기화 후 새로고침
+        }
+
         //원격 호출이므로 안전한 Swing 스레드 동기화를 통해 버튼 배경색 피드백 리셋 처리
         java.awt.Component[] comps = mainFrame.getContentPane().getComponents();
         //기본적으로 refreshLibrary 내에서 색상 관리가 수행되므로 플래그 전환 후 리프레시
@@ -2530,5 +2704,51 @@ public class BookShelfPage{
         delDialog.add(bottomButtonPanel, BorderLayout.SOUTH);
 
         delDialog.setVisible(true);
+    }
+
+    public ParodyPanel getParodyPanel() { return this.parodyPanel; }
+
+    //탭 버튼 생성 및 상태 동기화 헬퍼 메서드
+    private JButton createTabButton(String baseTitle){
+        JButton btn = new JButton(baseTitle){
+            @Override
+            protected void paintComponent(Graphics g){
+                super.paintComponent(g);
+
+                //현재 선태된 탭을 경우 하단에 청록색 밑줄 드로잉
+                if(getText().startsWith(currentStatusTab + " (")){
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setColor(new Color(0, 140, 140));
+                    g2.fillRect(0, getHeight()-2, getWidth(), 2);
+                    g2.dispose();
+                }
+            }
+        };
+        btn.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+
+        btn.addActionListener(e -> {
+            currentStatusTab = baseTitle;   //필터 상태값 전환
+            updateTabStyles();
+            refreshLibrary();   //필터 엔진 재가동
+        });
+        return btn;
+    }
+
+    private void updateTabStyles(){
+        if(btnTabAll == null) return;
+        JButton[] tabs = {btnTabAll, btnTabOngoing, btnTabCompleted, btnTabHiatus};
+        for(JButton btn : tabs){
+            if(btn.getText().startsWith(currentStatusTab + " (")){
+                btn.setForeground(new Color(0, 140, 140));
+            } else{
+                btn.setForeground(new Color(140, 145, 155));
+            }
+            btn.repaint();
+        }
     }
 }

@@ -1,6 +1,3 @@
-import javax.crypto.CipherInputStream;
-import javax.management.Descriptor;
-import javax.management.IntrospectionException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -26,6 +23,12 @@ public class AddNovelDialog extends JDialog {
 
     //현재 모드가 수정 모드인지 판별하고 기존 값을 유지하기 위한 참조 변수
     private Novel existingNovel = null;
+
+    private BookShelfPage masterShelf;
+
+    //패러디 모드 인식을 위한 플래그 변수와 포트
+    private boolean isParodyMode = false;
+    public void setParodyMode(boolean isParodyMode) { this.isParodyMode = isParodyMode; }
 
     public AddNovelDialog(JFrame parent){
         this(parent, null);   //2번으로 토스 연계
@@ -353,15 +356,27 @@ public class AddNovelDialog extends JDialog {
         Box.Filler leftSpacer = new Box.Filler(skeletonSpacer, skeletonSpacer, skeletonSpacer);
 
         //완결 배지 마킹 구역 붉은색 라운드 경고 배너 박스화
-        cbCompleted = new JCheckBox("이 작품은 완결된 작품입니다. (완결 배지 마킹)");
+        cbCompleted = new JCheckBox("완결 마킹");
+        JCheckBox cbHiatus = new JCheckBox("연재중단 마킹");
         JPanel completedBannerCard = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0)) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(cbCompleted.isSelected() ? new Color(255, 242, 242) : new Color(250, 252, 252));
-                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
-                g2.setColor(cbCompleted.isSelected() ? new Color(245, 190, 190) : borderGray);
+
+                if(cbCompleted.isSelected()){
+                    g2.setColor(new Color(255, 242, 242));
+                    g2.fillRoundRect(0, 0, getWidth()-1, getHeight()-1, 8, 8);
+                    g2.setColor(new Color(245, 190, 190));
+                } else if(cbHiatus.isSelected()){
+                    g2.setColor(new Color(245, 242, 255));
+                    g2.fillRoundRect(0, 0, getWidth()-1, getHeight()-1, 8, 8);
+                    g2.setColor(new Color(190, 180, 245));
+                } else{
+                    g2.setColor(new Color(250, 252, 252));
+                    g2.fillRoundRect(0, 0, getWidth()-1, getHeight()-1, 8, 8);
+                    g2.setColor(new Color(225, 228, 232));
+                }
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
                 g2.dispose();
             }
@@ -370,18 +385,38 @@ public class AddNovelDialog extends JDialog {
         completedBannerCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         completedBannerCard.setPreferredSize(new Dimension(400, 36));
 
+        //완결 체크박스 디자인
         cbCompleted.setOpaque(false);
         cbCompleted.setFocusPainted(false);
         cbCompleted.setFont(new Font("맑은 고딕", Font.BOLD, 12));
         cbCompleted.setForeground(new Color(210, 50, 50));
         cbCompleted.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        cbCompleted.addActionListener(e -> completedBannerCard.repaint());
 
-        if (existingNovel != null && existingNovel.isCompleted()) { //
-            cbCompleted.setSelected(true); //
+        // 연재중단 체크박스 디자인
+        cbHiatus.setOpaque(false);
+        cbHiatus.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        cbHiatus.setForeground(new Color(110, 90, 200));
+        cbHiatus.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        //완결 누르면 연재중단이 풀리고, 연재중단을 누르면 완결이 풀리게 설정
+        cbCompleted.addActionListener(e -> {
+            if(cbCompleted.isSelected()) cbHiatus.setSelected(false);
+            completedBannerCard.repaint();
+        });
+        cbHiatus.addActionListener(e -> {
+            if(cbHiatus.isSelected()) cbCompleted.setSelected(false);
+            completedBannerCard.repaint();
+        });
+
+        //기존 정보 복원
+        if(existingNovel != null){
+            if(existingNovel.isCompleted()) cbCompleted.setSelected(true);
+            if(existingNovel.isHiatus()) cbHiatus.setSelected(true);
         }
 
         completedBannerCard.add(cbCompleted);
+        completedBannerCard.add(Box.createVerticalStrut(10));
+        completedBannerCard.add(cbHiatus);
 
         rowCompletedMasterPanel.add(leftSpacer, BorderLayout.WEST);
         rowCompletedMasterPanel.add(completedBannerCard, BorderLayout.CENTER);
@@ -462,15 +497,24 @@ public class AddNovelDialog extends JDialog {
         JPanel rowFolderPanel = new JPanel(new BorderLayout(10, 0));
         rowFolderPanel.setBackground(Color.WHITE);
         rowFolderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        rowFolderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        rowFolderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
         JLabel lblFolder = new JLabel("소설 텍스트 폴더 *");
         lblFolder.setFont(new Font("맑은 고딕", Font.BOLD, 13));
         lblFolder.setForeground(new Color(50, 55, 60));
         lblFolder.setPreferredSize(new Dimension(130, 32));
 
+        // 입력창과 경고 문구를 세로로 묶을 래퍼 패널 생성
+        JPanel folderContentWrapper = new JPanel();
+        folderContentWrapper.setLayout(new BoxLayout(folderContentWrapper, BoxLayout.Y_AXIS));
+        folderContentWrapper.setBackground(Color.WHITE);
+
         JPanel folderRowPanel = new JPanel(new BorderLayout(8, 0));
         folderRowPanel.setBackground(Color.WHITE);
+        folderRowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        folderRowPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final String placeholderText = "주의: 폴더명은 작품 제목과 일치해야 합니다.";
 
         tfFolderPath = new JTextField() {
             @Override
@@ -489,6 +533,15 @@ public class AddNovelDialog extends JDialog {
         tfFolderPath.setEditable(false);
         tfFolderPath.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
         tfFolderPath.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+
+        // 기존 정보가 없으면 플레이스홀더 출력 (신규 등록 시)
+        if (existingNovel == null) {
+            tfFolderPath.setText(placeholderText);
+            tfFolderPath.setForeground(Color.GRAY);
+        } else {
+            tfFolderPath.setText(existingNovel.getFolderPath());
+            tfFolderPath.setForeground(Color.BLACK);
+        }
 
         JButton btnSelectFolder = new JButton("찾기") {
             @Override
@@ -514,8 +567,18 @@ public class AddNovelDialog extends JDialog {
         folderRowPanel.add(tfFolderPath, BorderLayout.CENTER);
         folderRowPanel.add(btnSelectFolder, BorderLayout.EAST);
 
+        // 특수문자 규칙 안내 레이블
+        JLabel lblFolderRule = new JLabel("※ 제목에 특수문자(\\ / : * ? \" < > |)가 있다면 폴더명에선 밑줄(_)로 쓰세요.");
+        lblFolderRule.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblFolderRule.setForeground(new Color(220, 80, 80));    //붉은 색으로 강조
+        lblFolderRule.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblFolderRule.setBorder(BorderFactory.createEmptyBorder(4, 2, 0, 0));
+
+        folderContentWrapper.add(folderRowPanel);
+        folderContentWrapper.add(lblFolderRule);
+
         rowFolderPanel.add(lblFolder, BorderLayout.WEST);
-        rowFolderPanel.add(folderRowPanel, BorderLayout.CENTER);
+        rowFolderPanel.add(folderContentWrapper, BorderLayout.CENTER);
         contentGridPanel.add(rowFolderPanel);
         contentGridPanel.add(Box.createVerticalStrut(14));
 
@@ -671,11 +734,19 @@ public class AddNovelDialog extends JDialog {
 
         // 파일/폴더 선택 이벤트 연결
         btnSelectFolder.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser("C:\\novel\\novels");
+            JFileChooser chooser = new JFileChooser();
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);   // 폴더 선택만 가능하게 세팅
+
+            if(isParodyMode){
+                chooser.setCurrentDirectory(new File("C:\\novel\\novels\\parodies"));
+            } else{
+                chooser.setCurrentDirectory(new File("C:\\novel\\novels\\novel_list"));
+            }
+
             int result = chooser.showOpenDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 tfFolderPath.setText(chooser.getSelectedFile().getAbsolutePath());
+                tfFolderPath.setForeground(Color.BLACK);    //정상 입력 시 검은색으로 전환
             }
         });
 
@@ -700,7 +771,7 @@ public class AddNovelDialog extends JDialog {
             String description = taDescription.getText().trim();
 
             //필수 입력 조건 체크(제목과 폴더는 필수)
-            if(title.isEmpty() || folderPath.isEmpty()){
+            if(title.isEmpty() || folderPath.isEmpty() || folderPath.equals("주의: 폴더명은 작품 제목과 일치해야 합니다.")){
                 JOptionPane.showMessageDialog(this, "소설 제목과 텍스트 폴더는 반드시 입력해야 합니다.", "경고", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -727,6 +798,7 @@ public class AddNovelDialog extends JDialog {
             //수정 모드인 경우 하트 링킹 타임스탬프도 유실되지 않도록 연속성을 보장
             resultNovel.setFavoriteTimestamp(favTime);
             resultNovel.setCompleted(cbCompleted.isSelected());
+            resultNovel.setHiatus(cbHiatus.isSelected());
 
             dispose();
         });
@@ -782,7 +854,7 @@ public class AddNovelDialog extends JDialog {
     }
 
 
-    //창이 오픈 되는 그 시점에 최신 AppSettinss 데이터를 가로채 체크박스 그룹을 초기화 및 재생성
+    //창이 오픈 되는 그 시점에 최신 AppSettings 데이터를 가로채 체크박스 그룹을 초기화 및 재생성
     private void buildDynamicPlatformCheckBoxes(JPanel panel, java.util.List<JCheckBox> list){
         System.out.println("플랫폼 목록:");
 

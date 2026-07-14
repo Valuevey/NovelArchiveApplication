@@ -19,6 +19,10 @@ public class AppSettings {
     //싱글톤 패턴 적용(프로그램 전체에서 단 하나의 설정 객체만 공유)
     private static AppSettings instance;
 
+    // 줄 간격, 문단 간격 변수
+    private double lineHeight;      // 줄 간격(기본 1.6)
+    private int paragraphSpacing;   //문단 간격(기본 10)
+
     public static AppSettings getInstance(){
         if(instance == null){
             instance = new AppSettings();
@@ -34,6 +38,8 @@ public class AppSettings {
         this.defaultFontName = "맑은 고딕";
         this.defaultFontSize = 16;
         this.customPlatform = new ArrayList<>(Arrays.asList("네이버 시리즈", "카카오페이지", "조아라", "문피아"));
+        this.lineHeight = 1.6;
+        this.paragraphSpacing = 10;
 
         //기본 4대 플랫폼 시스템 내장 기본 아이콘 경로로 초기 세팅
         this.customPlatformIcons = new ArrayList<>(Arrays.asList(
@@ -57,7 +63,9 @@ public class AppSettings {
                     defaultFontName + "|" +
                     defaultFontSize + "|" +
                     platformJoin + "|" +
-                    iconJoin;
+                    iconJoin + "|" +
+                    lineHeight + "|" +
+                    paragraphSpacing;
 
             bw.write(line);
             System.out.println(">> 환경 설정 파일 세이브 동기화 성공");
@@ -78,7 +86,7 @@ public class AppSettings {
             String line = br.readLine();
             if(line != null){
                 String[] data =line.split("\\|", -1);
-                if(data.length >= 5){
+                if(data.length >= 8){
                     this.installDate = data[0];
                     this.defaultTheme = data[1];
                     this.defaultFontName = data[2];
@@ -101,6 +109,9 @@ public class AppSettings {
                             this.customPlatformIcons.add(i.trim());
                         }
                     }
+
+                    this.lineHeight = Double.parseDouble(data[6]);
+                    this.paragraphSpacing = Integer.parseInt(data[7]);
                 }
             }
         } catch(Exception e){
@@ -120,6 +131,12 @@ public class AppSettings {
 
     public int getDefaultFontSize() { return defaultFontSize; }
     public void setDefaultFontSize(int defaultFontSize) { this.defaultFontSize = defaultFontSize; }
+
+    public double getLineHeight() { return lineHeight; }
+    public void setLineHeight(double lineHeight) { this.lineHeight = lineHeight; }
+
+    public int getParagraphSpacing() { return paragraphSpacing; }
+    public void setParagraphSpacing(int paragraphSpacing) { this.paragraphSpacing = paragraphSpacing; }
 
     public ArrayList<String> getCustomPlatforms() { return customPlatform; }
 
