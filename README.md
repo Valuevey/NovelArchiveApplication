@@ -95,12 +95,11 @@ src/
 ### 💡본 프로그램은 대용량 소설 데이터 축적 시의 파일 관리 편의성과 확장성을 극대화하기 위해, 프로젝트 내부가 아닌 로컬 디스크의 **독립된 외부 절대 경로(`C:\novel`)**에서 리소스를 실시간 참조합니다. 처음 실행  필요한 기본 구조를 아래와 같이 세팅해 주시기 바랍니다.
 
 
-
 ### 1. 필수 초기 세팅
-**프로그램이 정상적으로 작동하려면 C:\novel 경로에 아래의 필수 파일들이 배치되어야 합니다.**
+#### **프로그램이 정상적으로 작동하려면 C:\novel 경로에 아래의 필수 파일들이 배치되어야 합니다.**
 
 - icon 폴더 (필수): 시스템 UI 및 로고 표시를 위해 필요합니다.
---해당 폴더 내에 decor.png, decor2.png, no_cover.png, kakao.png, joara.png, munpia.png, series.png 파일이 위치해야 합니다.
+해당 폴더 내에 decor.png, decor2.png, no_cover.png, kakao.png, joara.png, munpia.png, series.png 파일이 위치해야 합니다.
 
 참고: icon 폴더가 없으면 일부 아이콘이 정상적으로 출력되지 않을 수 있습니다.
 
@@ -109,21 +108,42 @@ src/
 
 ```text
 C:\
- └── novel\
-      ├── icon\              # [필수] 시스템 고유 로고 및 기본 일러스트 저장소
-      │    ├── decor.png          # 보관함 하단 데코레이션 일러스트
-      │    ├── decor2.png          # 새 소설 등록창 하단 데코레이션 일러스트
-      │    ├── no_cover.png       # 등록된 표지가 없을 때 출력되는 기본 대체 이미지
-      │    ├── kakao.png          # 카카오페이지 로고 이미지
-      │    ├── joara.png          # 조아라 로고 이미지
-      │    ├── munpia.png          # 문피 로고 이미지
-      │    └── series.png         # 네이버 시리즈 로고 이미지
-      ├── covers\            # [선택] 개별 소설들의 커스텀 표지 이미지 모음 폴더
-      │    ├── 소설A_표지.jpg
-      │    └── 소설B_표지.png
-      └── novels\            # [선택] 소설 본문 텍스트(.txt) 회차 폴더 보관소
-           ├── 소설A_폴더/
-           └── 소설B_폴더/
+└─ novel\
+   ├─ icon\                        # [필수] 시스템 고유 로고 및 기본 일러스트 저장소
+   │  ├─ decor.png                 # 보관함 하단 데코레이션 일러스트
+   │  ├─ decor2.png                # 등록창 하단 데코레이션 일러스트
+   │  ├─ no_cover.png              # 등록된 표지가 없을 때 출력되는 기본 대체 이미지
+   │  ├─ kakao.png                 # 카카오페이지 로고 이미지
+   │  ├─ joara.png                 # 조아라 로고 이미지
+   │  ├─ munpia.png                # 문피아 로고 이미지
+   │  └─ series.png                # 네이버 시리즈 로고 이미지
+   │
+   ├─ covers\                      # [선택] 본편 소설 커스텀 표지 이미지 모음
+   │  ├─ 소설A_표지.jpg
+   │  └─ 소설B_표지.png
+   │
+   ├─ novels\                      # [신규] 본편/패러디/단편 텍스트 본문을 유형별로 분리 보관
+   │  ├─ novel_list\               # [선택] 본편 소설 본문 텍스트(.txt) 회차 폴더 보관소
+   │  │  ├─ 소설A_폴더\
+   │  │  └─ 소설B_폴더\
+   │  │
+   │  ├─ parodies\                 # [신규/선택] 패러디 작품 본문 텍스트 폴더 보관소
+   │  │  ├─ 패러디A_폴더\
+   │  │  └─ 패러디B_폴더\
+   │  │
+   │  └─ short_stories\            # [신규/선택] 단편/썰 본문 텍스트 폴더 보관소 (원작명 > 유형별 하위 분류)
+   │     └─ 원작명\
+   │        ├─ 단편\
+   │        ├─ 썰\
+   │        └─ 연작\
+   │
+   ├─ library_data.txt             # (자동 생성) 본편 서재 데이터 파일
+   ├─ parody_shorts_data.txt       # (자동 생성) 패러디 서재 데이터 파일
+   ├─ shorts_data.txt              # (자동 생성) 단편/썰 서재 데이터 파일
+   ├─ work_links.txt               # (자동 생성) 단편/썰 원작 연결 정보
+   ├─ platforms.txt                # (자동 생성) 단편/썰 전용 커스텀 플랫폼 목록
+   ├─ favorite_shorts.txt          # (자동 생성) 단편/썰 즐겨찾기 정보
+   └─ app_settings.txt             # (자동 생성) 환경설정 파일
 
 ```
 ### ⚠️icon폴더를 novel폴더 내부에 위치시킵니다.
@@ -132,17 +152,14 @@ C:\
 ---
 # 📸실행화면
 
-## 1. 메인 서재 보관함 화면
-<img width="851" height="482" alt="image" src="https://github.com/user-attachments/assets/179ef302-e26b-45dc-b401-b83443c71651" />
+## 1. 메인 서재 화면
+<img width="923" height="545" alt="내 서재" src="https://github.com/user-attachments/assets/97107c5b-7a79-462f-a58f-88741f7caadd" />
 
-### 2. 새 소설 추가 창
-<img width="447" height="518" alt="image" src="https://github.com/user-attachments/assets/8c357b8f-4c0a-4fa9-ad92-f18ec68cb902" />
+### 2. 단편/썰 서재 화면
+<img width="923" height="545" alt="단편 서재" src="https://github.com/user-attachments/assets/bdb50301-592f-4a09-9ecc-029f2c6fe19d" />
 
-### 3. 소설 상세 정보창
-<img width="388" height="557" alt="image" src="https://github.com/user-attachments/assets/f8e97abb-0b64-489e-b4c3-5534628d68e8" />
-
-### 3. 소설 뷰어 창
-<img width="353" height="478" alt="image" src="https://github.com/user-attachments/assets/f53f473c-c423-4782-9d12-d0bf2379ffac" />
+### 3. 패러디 서재 화면
+<img width="923" height="547" alt="패러디 서재" src="https://github.com/user-attachments/assets/cd9c2ac8-3d5d-4f83-831c-391054ba8550" />
 
 
 ---
