@@ -1176,12 +1176,12 @@ public class NovelViewerPage{
             if(files != null){
                 for(File f : files){
                     try{
-                        //파일명 앞자리 숫자 추출 시도
+                        // 파일명에서 숫자가 아닌 모든 문자를 제거 (목록창과 정규식 동기화)
                         String origName = f.getName();
-                        String numStr = origName.replaceAll("^\\s*(\\d+).*", "$1");
+                        String numStr = origName.replaceAll("[^0-9]", "");
 
-                        //파일명이 숫자로 시작하는 장편 소설 기조일 때
-                        if(numStr.matches("\\d+")){
+                        // 숫자가 하나라도 추출되었다면 타겟 회차와 비교
+                        if(!numStr.isEmpty()){
                             if(Integer.parseInt(numStr) == chapterNumber){
                                 targetFile = f;
                                 break;

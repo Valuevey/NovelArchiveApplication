@@ -36,6 +36,7 @@ public class NovelDetailPage {
     //사용자가 선택한 페이지 범위 관리 변수(기본값 : 1화부터 50화까지 분할 범위 지정)
     private int startPageRange = 0;
     private int endPageRange = 50;
+    private int currentActivePage = 1;  // 현재 활성화 된 페이지 번호
 
     //정렬 필터 추적 변수(true : 1화부터, false: 최신순)
     private boolean isSortAscending = true;
@@ -888,59 +889,117 @@ public class NovelDetailPage {
     //전체 소설 파일 개수를 추적하여 50화 단위 분할 버튼을 생성하는 메서드
     private void generatePageTabs(){
         pageTabPanel.removeAll();
-
         if(txtFiles.isEmpty()) return;
 
         //가장 마지막 파일의 회차 번호를 구함(리스트의 마지막 항목 활용)
         int totalMaxChapter = txtFiles.size();
-        int pageNumber = 1;
+        // 8페이지(400화)를 초과할 경우 페이지당 100화로 분할, 아니면 50화 분할
+        int pageSize = totalMaxChapter > 400 ? 100 : 50;
+        int totalPages = (int) Math.ceil((double) totalMaxChapter / pageSize);
+        int maxVisiblePages = 8;    // 화면에 보여줄 최대 버튼 수
 
-        //50화 단위로 루프를 돌며 필요한 만큼 탭 버튼을 동적으로 출력
-        //ex. 105화까지 있다면, 1~50, 51~100, 101~50 범위의 버튼을 노출
-        for(int i = 1; i <= totalMaxChapter; i+=50){
-            final int start = i;
-            final int end = i+49;
-            final int currentPageNum = pageNumber;
+        //초기 진입 시 기본 범위 세팅
+        if(this.startPageRange == 0){
+            this.currentActivePage = 1;
+            this.startPageRange = 1;
+            //페이지가 1장뿐이라면 숫자가 없는 파일까지 모두 포용하도록 MAX_VALUE 설정
+            this.endPageRange = (totalPages == 1) ? Integer.MAX_VALUE : pageSize;
+        }
 
-            //숫자 형태의 버튼 생성
-            JButton btnTab = new JButton(String.valueOf(pageNumber));
+        // 현재 페이지가 속한 그룹 계산( 1~8은 0번그룹, 9~16은 2번그룹)
+        int currentGroup = (currentActivePage - 1) / maxVisiblePages;
+        int startPage = currentGroup * maxVisiblePages + 1;
+        int endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+
+        // 이전 버튼 '<'
+        if(currentGroup > 0){
+            JButton btnPrev = new JButton("<");
+            btnPrev.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            btnPrev.setFocusPainted(false);
+            btnPrev.setBorderPainted(false);
+            btnPrev.setContentAreaFilled(false);
+            btnPrev.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnPrev.setForeground(new Color(120, 130, 140));
+            btnPrev.setMargin(new Insets(0, 0, 0, 0));
+
+            // 클릭 시 이전 그룹의 맨 앞 페이지(1, 9, 17 등)로 이동
+            btnPrev.addActionListener(e -> {
+                currentActivePage = (currentGroup - 1) * maxVisiblePages + 1;
+                updatePageRange(pageSize);
+            });
+            pageTabPanel.add(btnPrev);
+
+            // 화살표와 숫자 사이 여백
+            pageTabPanel.add(new JLabel(" "));
+        }
+
+        // 숫자 버튼 생성
+        for(int i = startPage; i<=endPage; i++){
+            final int pageNum = i;
+            JButton btnTab = new JButton(String.valueOf(pageNum));
             btnTab.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
             btnTab.setFocusPainted(false);
-            btnTab.setBorderPainted(false);     //외곽 테두리 선 제거
-            btnTab.setContentAreaFilled(false);     //배경 채우기 제거
+            btnTab.setBorderPainted(false);
+            btnTab.setContentAreaFilled(false);
             btnTab.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
             btnTab.setMargin(new Insets(0, 0, 0, 0));
 
-            //현재 선택된 페이지 번호 강조 마킹 연산
-            if(this.startPageRange == start){
+            if(pageNum == currentActivePage){
                 btnTab.setForeground(new Color(0, 120, 230));
                 btnTab.setFont(new Font("맑은 고딕", Font.BOLD, 13));
             } else{
                 btnTab.setForeground(Color.GRAY);
             }
 
-            //페이징 버튼 클릭 시 타겟 범위 변수를 변경하고 리스트를 다시 재렌더링하는 트리거 연결
             btnTab.addActionListener(e -> {
-                this.startPageRange = start;
-                this.endPageRange = end;
-                generatePageTabs();     //버튼 강조 상태 갱신을 위해 탭 다시 그리기
-                renderChapterList();    //본문 리스트 다시 필터링 출력
+                currentActivePage = pageNum;
+                updatePageRange(pageSize);
             });
 
             pageTabPanel.add(btnTab);
 
-            //숫자 사이에 구분 벽 기호(|) 추가 (단, 마지막 번호 뒤에는 생략)
-            if(i + 50 <= totalMaxChapter){
+            if(i < endPage){
                 JLabel lblDivider = new JLabel("|");
                 lblDivider.setFont(new Font("맑은 고딕", Font.PLAIN, 10));
                 lblDivider.setForeground(new Color(210, 215, 220));
                 pageTabPanel.add(lblDivider);
             }
-            pageNumber++;
+        }
+
+        // 다음화 버튼 '>'
+        if(endPage < totalPages){
+            pageTabPanel.add(new JLabel(" "));
+
+            JButton btnNext = new JButton(">");
+            btnNext.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            btnNext.setFocusPainted(false);
+            btnNext.setBorderPainted(false);
+            btnNext.setContentAreaFilled(false);
+            btnNext.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnNext.setForeground(new Color(120, 130, 140));
+            btnNext.setMargin(new Insets(0, 0, 0, 0));
+
+            // 클릭 시 다음 그룹의 맨 앞 페이지로 이동
+            btnNext.addActionListener(e -> {
+                currentActivePage = currentGroup * maxVisiblePages + maxVisiblePages + 1;
+                updatePageRange(pageSize);
+            });
+            pageTabPanel.add(btnNext);
         }
         pageTabPanel.revalidate();
         pageTabPanel.repaint();
+    }
+
+    // 변경된 페이지 번호를 기반으로 회차 범위를 재연산하고 목록을 리렌더링하는 메서드
+    private void updatePageRange(int pageSize) {
+        int totalMaxChapter = txtFiles.size();
+        int totalPages = (int) Math.ceil((double) totalMaxChapter / pageSize);
+
+        this.startPageRange = (currentActivePage - 1) * pageSize + 1;
+        this.endPageRange = (currentActivePage == totalPages) ? Integer.MAX_VALUE : currentActivePage * pageSize;
+
+        generatePageTabs();
+        renderChapterList();
     }
 
     //정렬된 파일 목록을 바탕으로 회차 리스트 버튼 UI를 그리는 로직
@@ -1062,10 +1121,19 @@ public class NovelDetailPage {
                 ArrayList<File> sortedList = new ArrayList<>(txtFiles);
                 Collections.sort(sortedList, (f1, f2) -> {
                     try{
-                        String num1 = f1.getName().replaceAll("^\\s*(\\d+).*", "$1");
-                        String num2 = f2.getName().replaceAll("^\\s*(\\d+).*", "$1");
-                        int cmp = Integer.compare(Integer.parseInt(num1), Integer.parseInt(num2));
-                        return isSortAscending ? cmp : -cmp;    //변수 플래그에 의한 역순 스위칭
+                        // [해결 2] 문자열에 포함된 "모든 숫자"만 추출하는 정규식 적용
+                        String numStr1 = f1.getName().replaceAll("[^0-9]", "");
+                        String numStr2 = f2.getName().replaceAll("[^0-9]", "");
+
+                        // 파일명에 숫자가 전혀 없다면(예: 외전.txt) 무조건 맨 뒤로 보내기 위해 MAX_VALUE 부여
+                        int num1 = numStr1.isEmpty() ? Integer.MAX_VALUE : Integer.parseInt(numStr1);
+                        int num2 = numStr2.isEmpty() ? Integer.MAX_VALUE : Integer.parseInt(numStr2);
+
+                        // 숫자 값이 같거나, 둘 다 숫자가 없다면 문자열 사전순 정렬
+                        if (num1 == num2) {
+                            return f1.getName().compareTo(f2.getName());
+                        }
+                        return isSortAscending ? Integer.compare(num1, num2) : Integer.compare(num2, num1);
                     } catch(Exception e) {
                         return f1.getName().compareTo(f2.getName());
                     }
@@ -1076,10 +1144,11 @@ public class NovelDetailPage {
                 for(File file : sortedList){
                     int chNum = 1;
                     try{
-                        String numStr = file.getName().replaceAll("^\\s*(\\d+).*", "$1");
-                        chNum = Integer.parseInt(numStr);
+                        // 회차 번호 식별도 동일한 정규식으로 통일
+                        String numStr = file.getName().replaceAll("[^0-9]", "");
+                        chNum = numStr.isEmpty() ? Integer.MAX_VALUE : Integer.parseInt(numStr);
                     } catch(Exception e){
-                        chNum = 1;
+                        chNum = Integer.MAX_VALUE;
                     }
 
                     boolean isWithinRage = (startPageRange == 0) || (chNum >= startPageRange && chNum <= endPageRange);
