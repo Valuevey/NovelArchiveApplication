@@ -86,6 +86,7 @@ src/
 ├── AppSettings.java            # 전역 환경설정 (싱글톤)
 ├── Novel.java                  # 소설/패러디 데이터 모델
 └── Snippet.java                # 단편/썰 데이터 모델
+```
 
 
 ### Main.java
