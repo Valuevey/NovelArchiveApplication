@@ -45,7 +45,7 @@ public class ImageManagerDialog extends JDialog {
 
         JButton btnAdd = new JButton("삽화/이미지 추가");
         btnAdd.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        btnAdd.setBackground(new Color(0, 140, 140));
+        btnAdd.setBackground(UiStyle.COLOR_ACCENT);
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setFocusPainted(false);
         btnAdd.setBorder(BorderFactory.createEmptyBorder(12, 0, 12, 0));
@@ -110,7 +110,7 @@ public class ImageManagerDialog extends JDialog {
 
         // 회차 설정
         JLabel lblChapter = new JLabel("[" + meta[1] + "편설정]");
-        lblChapter.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        lblChapter.setFont(UiStyle.FONT_PLAIN_12);
         lblChapter.setForeground(new Color(150, 150, 150));
 
         textGroup.add(lblTitle);
@@ -247,7 +247,7 @@ public class ImageManagerDialog extends JDialog {
         chapterPanel.add(btnSelectChapter);
 
         JLabel lblFile = new JLabel("선택된 파일: 없음");
-        lblFile.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblFile.setFont(UiStyle.FONT_PLAIN_11);
         lblFile.setForeground(Color.GRAY);
 
         JButton btnSelectFile = new JButton("이미지 파일 찾기");
@@ -274,7 +274,7 @@ public class ImageManagerDialog extends JDialog {
         addDialog.add(formPanel, BorderLayout.CENTER);
 
         JButton btnSave = new JButton("등록 완료");
-        btnSave.setBackground(new Color(0, 140, 140));
+        btnSave.setBackground(UiStyle.COLOR_ACCENT);
         btnSave.setForeground(Color.WHITE);
         btnSave.setFocusPainted(false);
         btnSave.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
@@ -393,7 +393,7 @@ public class ImageManagerDialog extends JDialog {
         descWrapper.setBackground(Color.WHITE);
         String description = (meta.length > 2) ? meta[2] : "설명 없음";
         JLabel descLbl = new JLabel("<html><div style='width: 420px; text-align: left; color: #444444;'>" + description + "</div></html>");
-        descLbl.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        descLbl.setFont(UiStyle.FONT_PLAIN_13);
         descWrapper.add(descLbl);
         panel.add(descWrapper);
 
@@ -444,7 +444,7 @@ public class ImageManagerDialog extends JDialog {
         editDialog.add(formPanel, BorderLayout.CENTER);
 
         JButton btnSave = new JButton("수정 완료");
-        btnSave.setBackground(new Color(0, 140, 140));
+        btnSave.setBackground(UiStyle.COLOR_ACCENT);
         btnSave.setForeground(Color.WHITE);
         btnSave.setFocusPainted(false);
         btnSave.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));

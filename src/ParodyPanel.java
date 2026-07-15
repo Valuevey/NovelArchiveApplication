@@ -23,6 +23,8 @@ public class ParodyPanel extends JPanel {
 
     private int cardCount = 0;
 
+    private final java.util.Map<String, ImageIcon> coverImageCache = new java.util.HashMap<>();
+
     //상태 탭바 제어용 변수 신설
     private String currentStatusTab = "전체";
     private JButton btnTabAll, btnTabOngoing, btnTabCompleted, btnTabHiatus;
@@ -106,7 +108,7 @@ public class ParodyPanel extends JPanel {
         platformCombo.setBackground(Color.WHITE);
         platformCombo.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 5));
         platformCombo.setFocusable(false);
-        platformCombo.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        platformCombo.setFont(UiStyle.FONT_BOLD_12);
         platformCombo.setForeground(new Color(110, 90, 200));
         platformCombo.setPreferredSize(new Dimension(130, 32));
 
@@ -117,7 +119,7 @@ public class ParodyPanel extends JPanel {
                 JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 c.setBackground(Color.WHITE);
                 c.setForeground(new Color(110, 90, 200));
-                c.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                c.setFont(UiStyle.FONT_PLAIN_12);
                 c.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                 return c;
             }
@@ -161,7 +163,7 @@ public class ParodyPanel extends JPanel {
                 super.paintComponent(g);
             }
         };
-        btnAddParody.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnAddParody.setFont(UiStyle.FONT_BOLD_12);
         btnAddParody.setForeground(new Color(110, 90, 200));
         btnAddParody.setFocusPainted(false); btnAddParody.setBorderPainted(false); btnAddParody.setContentAreaFilled(false);
         btnAddParody.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -190,7 +192,7 @@ public class ParodyPanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 //2. 테두리 드로잉(소프트 그레이)
-                g2.setColor(new Color(225, 228, 232));
+                g2.setColor(UiStyle.COLOR_BORDER_GRAY);
                 g2.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 12, 12);
 
                 g2.dispose();
@@ -202,7 +204,7 @@ public class ParodyPanel extends JPanel {
         sortCombo.setBackground(Color.WHITE);
         sortCombo.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 5));
         sortCombo.setFocusable(false);
-        sortCombo.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        sortCombo.setFont(UiStyle.FONT_BOLD_12);
         sortCombo.setForeground(new Color(60, 65, 75));
         sortCombo.setPreferredSize(new Dimension(135, 32));
 
@@ -212,7 +214,7 @@ public class ParodyPanel extends JPanel {
                 JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 c.setBackground(Color.WHITE);
                 c.setForeground(new Color(60, 65, 75)); // 선택 글자색 다크 차콜 그레이
-                c.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                c.setFont(UiStyle.FONT_PLAIN_12);
                 c.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                 return c;
             }
@@ -257,7 +259,7 @@ public class ParodyPanel extends JPanel {
                 g2.setColor(Color.WHITE);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
 
-                g2.setColor(new Color(225, 228, 232));
+                g2.setColor(UiStyle.COLOR_BORDER_GRAY);
                 g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 12, 12);
 
                 g2.dispose();
@@ -267,12 +269,12 @@ public class ParodyPanel extends JPanel {
         searchField.setOpaque(false);
         searchField.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         searchField.setForeground(Color.GRAY);
-        searchField.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        searchField.setFont(UiStyle.FONT_PLAIN_12);
         searchField.addActionListener(e -> refreshParodyLibrary());
 
         JButton btnCancelSearch = new JButton("취소");
         btnCancelSearch.setPreferredSize(new Dimension(30, 30));
-        btnCancelSearch.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnCancelSearch.setFont(UiStyle.FONT_BOLD_12);
         btnCancelSearch.setForeground(new Color(110, 90, 200));
         btnCancelSearch.setFocusPainted(false);
         btnCancelSearch.setBorderPainted(false);
@@ -356,13 +358,13 @@ public class ParodyPanel extends JPanel {
         for(int i=0; i<infoLines.length; i++){
             JLabel lineLabel = new JLabel(infoLines[i]);
             if(i==0){
-                lineLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+                lineLabel.setFont(UiStyle.FONT_BOLD_13);
                 lineLabel.setForeground(new Color(110, 90, 200));
             } else if(infoLines[i].contains("부분 일치")){
                 lineLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
                 lineLabel.setForeground(new Color(130, 130, 130));
             } else{
-                lineLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                lineLabel.setFont(UiStyle.FONT_PLAIN_12);
                 lineLabel.setForeground(new Color(60, 60, 60));
             }
             tipContainer.add(lineLabel);
@@ -426,11 +428,11 @@ public class ParodyPanel extends JPanel {
     // 2. [내 서재] 본문 마스터 패널 스크롤 사양 완벽 동기화
     private void initListBody() {
         libraryGridPanel = new JPanel();
-        libraryGridPanel.setBackground(new Color(248, 250, 252));
+        libraryGridPanel.setBackground(UiStyle.COLOR_BG_LIGHT);
         libraryGridPanel.setLayout(new GridBagLayout()); // 바둑판식 Layout 배치 가동
 
         JPanel gridWrapper = new JPanel(new BorderLayout());
-        gridWrapper.setBackground(new Color(248, 250, 252));
+        gridWrapper.setBackground(UiStyle.COLOR_BG_LIGHT);
         gridWrapper.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 
         JPanel innerAlignPanel = new JPanel(new BorderLayout());
@@ -439,8 +441,8 @@ public class ParodyPanel extends JPanel {
         gridWrapper.add(innerAlignPanel, BorderLayout.NORTH);
 
         JScrollPane libraryScrollPane = new JScrollPane(gridWrapper);
-        libraryScrollPane.setBackground(new Color(248, 250, 252));
-        libraryScrollPane.getViewport().setBackground(new Color(248, 250, 252));
+        libraryScrollPane.setBackground(UiStyle.COLOR_BG_LIGHT);
+        libraryScrollPane.getViewport().setBackground(UiStyle.COLOR_BG_LIGHT);
         libraryScrollPane.setBorder(BorderFactory.createEmptyBorder());
         libraryScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
@@ -714,46 +716,55 @@ public class ParodyPanel extends JPanel {
             try{
                 //ImageIO를 사용하여 이미지를 동기식으로 로드
                 File coverFile = new File(novel.getCoverPath());
-                java.awt.image.BufferedImage srcImg = javax.imageio.ImageIO.read(coverFile);
+                String cacheKey = coverFile.getAbsolutePath() + "_" + coverFile.lastModified();
+                ImageIcon cached = coverImageCache.get(cacheKey);
 
-                //2. 가로세로 비율 유지를 위한 정밀 좌표 연산(종횡비 보존)
-                int srcWidth = srcImg.getWidth(null);
-                int srcHeight = srcImg.getHeight(null);
+                if(cached != null){
+                    lblCover.setIcon(cached);
+                } else {
+                    java.awt.image.BufferedImage srcImg = javax.imageio.ImageIO.read(coverFile);
 
-                double targetScale = Math.max((double) targetWidth / srcWidth, (double) targetHeight / srcHeight);
-                int scaledWidth = (int) (srcWidth * targetScale);
-                int scaledHeight = (int) (srcHeight * targetScale);
+                    //2. 가로세로 비율 유지를 위한 정밀 좌표 연산(종횡비 보존)
+                    int srcWidth = srcImg.getWidth(null);
+                    int srcHeight = srcImg.getHeight(null);
 
-                //중앙 정렬을 위한 잘라내기 시작 좌표 도출
-                int x = (targetWidth - scaledWidth) / 2;
-                int y = (targetHeight - scaledHeight) / 2;
+                    double targetScale = Math.max((double) targetWidth / srcWidth, (double) targetHeight / srcHeight);
+                    int scaledWidth = (int) (srcWidth * targetScale);
+                    int scaledHeight = (int) (srcHeight * targetScale);
 
-                //3. 고화질 캔버스 준비 및 그래픽스 엔진 드로잉
-                java.awt.image.BufferedImage resizedImg = new java.awt.image.BufferedImage(
-                        targetWidth, targetHeight, java.awt.image.BufferedImage.TYPE_INT_ARGB
-                );
-                Graphics2D g2 = resizedImg.createGraphics();
+                    //중앙 정렬을 위한 잘라내기 시작 좌표 도출
+                    int x = (targetWidth - scaledWidth) / 2;
+                    int y = (targetHeight - scaledHeight) / 2;
 
-                //초고화질 그래픽 렌더링 힌트 다중 주입
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    //3. 고화질 캔버스 준비 및 그래픽스 엔진 드로잉
+                    java.awt.image.BufferedImage resizedImg = new java.awt.image.BufferedImage(
+                            targetWidth, targetHeight, java.awt.image.BufferedImage.TYPE_INT_ARGB
+                    );
+                    Graphics2D g2 = resizedImg.createGraphics();
 
-                // 표지 상단 모서리만 둥글게 클리핑 처리(하단은 그라데이션으로 덮이므로 여유 마진 부여)
-                g2.setClip(new RoundRectangle2D.Float(0, 0, targetWidth, targetHeight, 14, 14));
-                g2.drawImage(srcImg, x, y, scaledWidth, scaledHeight, null);
+                    //초고화질 그래픽 렌더링 힌트 다중 주입
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // 표지 하단에 자연스러운 그라데이션 페이드아웃 효과 적용
-                GradientPaint fade = new GradientPaint(
-                        0, targetHeight - 60, new Color(255, 255, 255, 0),  // 하단 60px 위부터 투명하게 시작
-                        0, targetHeight, Color.WHITE    //맨 밑바닥은 완전한 불투명 흰색
-                );
-                g2.setPaint(fade);
-                g2.fillRect(0, targetHeight - 60, targetWidth, 60);
+                    // 표지 상단 모서리만 둥글게 클리핑 처리(하단은 그라데이션으로 덮이므로 여유 마진 부여)
+                    g2.setClip(new RoundRectangle2D.Float(0, 0, targetWidth, targetHeight, 14, 14));
+                    g2.drawImage(srcImg, x, y, scaledWidth, scaledHeight, null);
 
-                g2.dispose();
+                    // 표지 하단에 자연스러운 그라데이션 페이드아웃 효과 적용
+                    GradientPaint fade = new GradientPaint(
+                            0, targetHeight - 60, new Color(255, 255, 255, 0),  // 하단 60px 위부터 투명하게 시작
+                            0, targetHeight, Color.WHITE    //맨 밑바닥은 완전한 불투명 흰색
+                    );
+                    g2.setPaint(fade);
+                    g2.fillRect(0, targetHeight - 60, targetWidth, 60);
 
-                lblCover.setIcon(new ImageIcon(resizedImg));
+                    g2.dispose();
+
+                    ImageIcon newIcon = new ImageIcon(resizedImg);
+                    coverImageCache.put(cacheKey, newIcon);
+                    lblCover.setIcon(newIcon);
+                }
             } catch(Exception e){
                 lblCover.setText("IMAGE ERROR");
             }
@@ -788,7 +799,7 @@ public class ParodyPanel extends JPanel {
         // 다중제목 <html> 태그를 활용하여 자동 줄바꿈
         String displayTitle = novel.getTitle();
         JLabel lblTitle = new JLabel("<html><body style='width: 160px; word-wrap: break-word; margin: 0; padding: 0; line-height: 1.1;'>" + displayTitle + "</body></html>");
-        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        lblTitle.setFont(UiStyle.FONT_BOLD_13);
         lblTitle.setForeground(new Color(30, 35, 40));
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -900,7 +911,7 @@ public class ParodyPanel extends JPanel {
 
         JLabel lblPercent = new JLabel(percent + "%");
         lblPercent.setFont(new Font("맑은 고딕", Font.BOLD, 11));
-        lblPercent.setForeground(new Color(0, 140, 140));
+        lblPercent.setForeground(UiStyle.COLOR_ACCENT);
 
         progressTextRow.add(lblProgressText, BorderLayout.WEST);
         progressTextRow.add(lblPercent, BorderLayout.EAST);
@@ -1090,7 +1101,7 @@ public class ParodyPanel extends JPanel {
                 }
             }
         };
-        btn.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btn.setFont(UiStyle.FONT_BOLD_12);
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setContentAreaFilled(false);
@@ -1112,7 +1123,7 @@ public class ParodyPanel extends JPanel {
             if(btn.getText().startsWith(currentStatusTab + " (")){
                 btn.setForeground(new Color(110, 90, 200));
             } else{
-                btn.setForeground(new Color(140, 145, 155));
+                btn.setForeground(UiStyle.COLOR_ICON_INACTIVE);
             }
             btn.repaint();
         }

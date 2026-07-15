@@ -121,7 +121,7 @@ public class AppSettings {
 
     //[Getter / Setter 데이터 파이프라인 포트 개방]
     public String getInstallDate() { return installDate; }
-    public void setInstallDate(){ this.installDate = installDate; }
+    public void setInstallDate(String installDate){ this.installDate = installDate; }
 
     public String getDefaultTheme() { return defaultTheme; }
     public void setDefaultTheme(String defaultTheme) { this.defaultTheme = defaultTheme; }

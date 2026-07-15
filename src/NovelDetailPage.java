@@ -148,7 +148,7 @@ public class NovelDetailPage {
         } else{
             //no_cover.png 파일 조차 디렉터리에 배치되지 않았을 때는 대비한 최하위 안전장치
             lblCover.setText("NO COVER");
-            lblCover.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            lblCover.setFont(UiStyle.FONT_BOLD_12);
             lblCover.setForeground(Color.LIGHT_GRAY);
         }
 
@@ -259,7 +259,7 @@ public class NovelDetailPage {
         String genreStr = (novel.getGenre() == null || novel.getGenre().isEmpty() ? "미분류" : novel.getGenre());
         String authorStr = (novel.getAuthor() == null || novel.getAuthor().isEmpty() ? "작자미상" : novel.getAuthor());
         JLabel lblGenreAuthor = new JLabel(genreStr + " ㆍ " + authorStr);
-        lblGenreAuthor.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        lblGenreAuthor.setFont(UiStyle.FONT_BOLD_13);
         lblGenreAuthor.setForeground(new Color(80, 80, 80));
         lblGenreAuthor.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -283,14 +283,14 @@ public class NovelDetailPage {
         });
 
         JLabel lblPlatform = new JLabel("플랫폼: " + novel.getPlatform());
-        lblPlatform.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        lblPlatform.setFont(UiStyle.FONT_PLAIN_12);
         lblPlatform.setForeground(new Color(0, 100, 100));  //푸른색 강조
         lblPlatform.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         //총 편수 표시
         readChapterFiles();
         JLabel lblTotalCount = new JLabel("총 " + txtFiles.size() + "화");
-        lblTotalCount.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        lblTotalCount.setFont(UiStyle.FONT_PLAIN_12);
         lblTotalCount.setForeground(new Color(120, 120, 120));
         lblTotalCount.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -304,7 +304,7 @@ public class NovelDetailPage {
         }
         JLabel lblKeywords = new JLabel("<html><div style='width: 220px;'>"+
                 (sbKeys.toString().isEmpty() ? "#키워드 없음" : sbKeys.toString()) + "</div></html>");
-        lblKeywords.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblKeywords.setFont(UiStyle.FONT_PLAIN_11);
         lblKeywords.setForeground(new Color(0, 140, 180));
         lblKeywords.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -325,7 +325,7 @@ public class NovelDetailPage {
 
         //팝업 메뉴 내무 항목 A : 수정 메뉴 세팅
         JMenuItem menuEdit = new JMenuItem("작품 정보 수정");
-        menuEdit.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        menuEdit.setFont(UiStyle.FONT_PLAIN_12);
         menuEdit.setBackground(Color.WHITE);
         menuEdit.addActionListener(e -> {
             //수정 전용 팝업 창을 띄우고 현재 소설 객체를 전달
@@ -425,7 +425,7 @@ public class NovelDetailPage {
 
         //팝업 메뉴 내부 항목 B : 삭제 메뉴 세팅
         JMenuItem menuDelete = new JMenuItem("작품 완전 삭제");
-        menuDelete.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        menuDelete.setFont(UiStyle.FONT_PLAIN_12);
         menuDelete.setBackground(Color.WHITE);
         menuDelete.setForeground(Color.RED);    //삭제 강조는 적색 매핑
         menuDelete.addActionListener(e -> {
@@ -442,7 +442,7 @@ public class NovelDetailPage {
 
         //팝업 메뉴 내부 항목 C : 메모 기능
         JMenuItem memuSummary = new JMenuItem("회차별 요약 메모");
-        memuSummary.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        memuSummary.setFont(UiStyle.FONT_PLAIN_12);
         memuSummary.setBackground(Color.WHITE);
         memuSummary.addActionListener(e -> {
             //메모 편집 및 조회를 위한 독립형 팝업 다이얼로그 구동 메서드 호출
@@ -451,7 +451,7 @@ public class NovelDetailPage {
 
         //팝업 메뉴 내부 항목 D : 삽화 추가 기능
         JMenuItem menuImage = new JMenuItem("삽화 및 이미지");
-        menuImage.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        menuImage.setFont(UiStyle.FONT_PLAIN_12);
         menuImage.setBackground(Color.WHITE);
         menuImage.addActionListener(e -> {
             //삽화 관리 다이얼로그 호출(아직 안 만들어서 메서드만 연결)
@@ -661,7 +661,7 @@ public class NovelDetailPage {
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
 
                 // 2. 좌측 벽면에 청록색 수직선 배치
-                g2.setColor(new Color(0, 140, 140));
+                g2.setColor(UiStyle.COLOR_ACCENT);
                 g2.fillRoundRect(0, 8, 3, getHeight()-16, 2, 2);
 
                 g2.dispose();
@@ -755,19 +755,19 @@ public class NovelDetailPage {
         btnBookmarkToggle.setBorderPainted(false);
         btnBookmarkToggle.setContentAreaFilled(false);
         btnBookmarkToggle.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnBookmarkToggle.setForeground(new Color(140, 145, 155));
+        btnBookmarkToggle.setForeground(UiStyle.COLOR_ICON_INACTIVE);
 
         btnBookmarkToggle.addActionListener(evt -> {
             isBookmarkMode = !isBookmarkMode;   //상태 반전
             if(isBookmarkMode){
                 btnBookmarkToggle.setText("전체 회차 보기");
-                btnBookmarkToggle.setForeground(new Color(0, 140, 140));
+                btnBookmarkToggle.setForeground(UiStyle.COLOR_ACCENT);
                 btnSortToggle.setForeground(new Color(180, 140, 140));
                 btnSortToggle.setEnabled(true);    //책갈피 모드에서 회차 정렬 버튼 사용 가능
             } else{
                 btnBookmarkToggle.setText("책갈피 보기");
-                btnBookmarkToggle.setForeground(new Color(140, 145, 155));
-                btnSortToggle.setForeground(new Color(0, 140, 140));
+                btnBookmarkToggle.setForeground(UiStyle.COLOR_ICON_INACTIVE);
+                btnSortToggle.setForeground(UiStyle.COLOR_ACCENT);
                 btnSortToggle.setEnabled(true);
             }
             renderChapterList();    //바뀐 스위치 플래그 기반 하단 바둑판 리렌더링
@@ -815,7 +815,7 @@ public class NovelDetailPage {
 
         //버튼 생성 로직 분리
         btnContinue = new JButton();
-        btnContinue.setBackground(new Color(0, 140, 140));
+        btnContinue.setBackground(UiStyle.COLOR_ACCENT);
         btnContinue.setForeground(Color.WHITE);
         btnContinue.setFont(new Font("맑은 고딕", Font.BOLD, 15));
         btnContinue.setFocusPainted(false);
@@ -914,7 +914,7 @@ public class NovelDetailPage {
         // 이전 버튼 '<'
         if(currentGroup > 0){
             JButton btnPrev = new JButton("<");
-            btnPrev.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            btnPrev.setFont(UiStyle.FONT_BOLD_12);
             btnPrev.setFocusPainted(false);
             btnPrev.setBorderPainted(false);
             btnPrev.setContentAreaFilled(false);
@@ -937,7 +937,7 @@ public class NovelDetailPage {
         for(int i = startPage; i<=endPage; i++){
             final int pageNum = i;
             JButton btnTab = new JButton(String.valueOf(pageNum));
-            btnTab.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+            btnTab.setFont(UiStyle.FONT_PLAIN_12);
             btnTab.setFocusPainted(false);
             btnTab.setBorderPainted(false);
             btnTab.setContentAreaFilled(false);
@@ -946,7 +946,7 @@ public class NovelDetailPage {
 
             if(pageNum == currentActivePage){
                 btnTab.setForeground(new Color(0, 120, 230));
-                btnTab.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+                btnTab.setFont(UiStyle.FONT_BOLD_13);
             } else{
                 btnTab.setForeground(Color.GRAY);
             }
@@ -971,7 +971,7 @@ public class NovelDetailPage {
             pageTabPanel.add(new JLabel(" "));
 
             JButton btnNext = new JButton(">");
-            btnNext.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            btnNext.setFont(UiStyle.FONT_BOLD_12);
             btnNext.setFocusPainted(false);
             btnNext.setBorderPainted(false);
             btnNext.setContentAreaFilled(false);
@@ -1017,7 +1017,7 @@ public class NovelDetailPage {
             File memoFile = new File(path + "memo_bookmarks.txt");
             if(!memoFile.exists()){
                 JLabel lblEmpty = new JLabel("저장된 책갈피 메모가 없습니다.", SwingConstants.CENTER);
-                lblEmpty.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                lblEmpty.setFont(UiStyle.FONT_PLAIN_12);
                 lblEmpty.setForeground(Color.GRAY);
                 chapterListPanel.add(lblEmpty);
             } else{
@@ -1068,7 +1068,7 @@ public class NovelDetailPage {
                         lblMemo.setFont(new Font("맑은 고딕", Font.ITALIC, 13));    //ITALIC : 기울임
                         lblMemo.setForeground(Color.LIGHT_GRAY);    //흐린 회색
                     } else{
-                        lblMemo.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+                        lblMemo.setFont(UiStyle.FONT_PLAIN_13);
                         lblMemo.setForeground(new Color(60, 65, 70));   //본문 잉크색 지정
                     }
 
@@ -1089,12 +1089,12 @@ public class NovelDetailPage {
                     leftTitleGroup.add(lblMemo);
 
                     JButton btnRead = new JButton("보기");
-                    btnRead.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+                    btnRead.setFont(UiStyle.FONT_BOLD_12);
                     btnRead.setFocusPainted(false);
                     btnRead.setBorderPainted(false);
                     btnRead.setContentAreaFilled(false);
                     btnRead.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                    btnRead.setForeground(new Color(0, 140, 140));
+                    btnRead.setForeground(UiStyle.COLOR_ACCENT);
                     btnRead.setMargin(new Insets(2, 8, 2, 8));
 
                     btnRead.addActionListener(e -> {
@@ -1114,7 +1114,7 @@ public class NovelDetailPage {
         else{
             if(txtFiles.isEmpty()){
                 JLabel lblNoFile = new JLabel("등록된 회차 파일이 없습니다.", SwingConstants.CENTER);
-                lblNoFile.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+                lblNoFile.setFont(UiStyle.FONT_PLAIN_13);
                 chapterListPanel.add(lblNoFile);
             } else {
                 //실시간 양방향 정렬 기준 스위칭 연산 실행
@@ -1139,12 +1139,26 @@ public class NovelDetailPage {
                     }
                 });
 
+                //책갈피 메모 파일은 루프 진입 전 딱 한 번만 읽어서, 회차번호를 Set으로 캐싱해둠
+                java.util.Set<String> bookmarkedChapters = new java.util.HashSet<>();
+                File memoFile = new File(currentNovel.getFolderPath() + File.separator + "memo_bookmarks.txt");
+                if(memoFile.exists()){
+                    try(BufferedReader br = new BufferedReader(new FileReader(memoFile))){
+                        String line;
+                        while((line = br.readLine()) != null){
+                            String[] split = line.split("\\|", -1);
+                            if(split.length >= 2){
+                                bookmarkedChapters.add(split[0].trim());
+                            }
+                        }
+                    } catch (Exception e) { /* 예외 무시 */ }
+                }
+
                 int renderCount = 0;        //실제 화면에 출력된 개수 카운트 변수
 
                 for(File file : sortedList){
                     int chNum = 1;
                     try{
-                        // 회차 번호 식별도 동일한 정규식으로 통일
                         String numStr = file.getName().replaceAll("[^0-9]", "");
                         chNum = numStr.isEmpty() ? Integer.MAX_VALUE : Integer.parseInt(numStr);
                     } catch(Exception e){
@@ -1153,26 +1167,12 @@ public class NovelDetailPage {
 
                     boolean isWithinRage = (startPageRange == 0) || (chNum >= startPageRange && chNum <= endPageRange);
 
-                    //파싱된 회차 번호가 현재 지정된 범위에 포함되는 파일만 화면에 출력
                     if(isWithinRage){
                         renderCount++;
                         String chName = file.getName().replace(".txt", "");
 
-                        //해당 회차에 책갈피 메모가 저장되어 있는지 디스크 실시간 탐색
-                        boolean isThisChapterBookmarked = false;
-                        File memoFile = new File(currentNovel.getFolderPath() + File.separator + "memo_bookmarks.txt");
-                        if(memoFile.exists()){
-                            try(BufferedReader br = new BufferedReader(new FileReader(memoFile))){
-                                String line;
-                                while((line = br.readLine()) != null){
-                                    String[] split = line.split("\\|", -1);
-                                    if(split.length >= 2 && split[0].trim().equals(String.valueOf(chNum))){
-                                        isThisChapterBookmarked = true;
-                                        break;
-                                    }
-                                }
-                            } catch (Exception e) { /* 예외 무시 */ }
-                        }
+                        //파일 재탐색 없이 미리 만든 Set에서 바로 조회 (O(1))
+                        boolean isThisChapterBookmarked = bookmarkedChapters.contains(String.valueOf(chNum));
 
                         //회차별 가로 바 패널 생성
                         JPanel row = new JPanel(new BorderLayout());
@@ -1185,7 +1185,7 @@ public class NovelDetailPage {
                         leftTitleGroup.setBackground(Color.WHITE);
 
                         JLabel lblChTitle = new JLabel(chName);
-                        lblChTitle.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+                        lblChTitle.setFont(UiStyle.FONT_PLAIN_13);
 
                         //회차 제목 라벨 클릭 시에도 뷰어 창 열리도록 마우스 인터페이스 이식
                         lblChTitle.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -1234,14 +1234,14 @@ public class NovelDetailPage {
                         }
 
                         JButton btnRead = new JButton("보기");
-                        btnRead.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+                        btnRead.setFont(UiStyle.FONT_BOLD_12);
                         btnRead.setFocusPainted(false);
                         btnRead.setBorderPainted(false);
                         btnRead.setContentAreaFilled(false);
                         btnRead.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
                         //글자 색상을 청록색으로 설정
-                        btnRead.setForeground(new Color(0, 140, 140));
+                        btnRead.setForeground(UiStyle.COLOR_ACCENT);
 
                         //압축된 행 높이에 맞춰 버튼 내부 마진 여백을 슬림하게 함
                         btnRead.setMargin(new Insets(2, 8, 2, 8));
@@ -1264,7 +1264,7 @@ public class NovelDetailPage {
                 //예외 처리 : 해당 범위에 파일이 하나도 검출되지 않았을 때의 상태 표기
                 if(renderCount == 0){
                     JLabel lblEmptyRange = new JLabel("해당 범위에 포함된 회차 파일이 없습니다.", SwingConstants.CENTER);
-                    lblEmptyRange.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                    lblEmptyRange.setFont(UiStyle.FONT_PLAIN_12);
                     lblEmptyRange.setForeground(Color.GRAY);
                     chapterListPanel.add(lblEmptyRange);
                 }
@@ -1320,14 +1320,14 @@ public class NovelDetailPage {
 
         //안내 문구 배치
         JLabel lblGuide = new JLabel("<html><body>소설의 주요 내용이나 기억해둘 내용을 자유롭게 작성하세요.(ex. 1화 주인공 등장)</body></html>");
-        lblGuide.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblGuide.setFont(UiStyle.FONT_PLAIN_11);
         lblGuide.setForeground(Color.GRAY);
         lblGuide.setBorder(BorderFactory.createEmptyBorder(10, 15, 5, 15));
         noteDialog.add(lblGuide, BorderLayout.NORTH);
 
         //자유 입력을 위한 텍스트 에어리어 세팅
         JTextArea taSummary = new JTextArea();
-        taSummary.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        taSummary.setFont(UiStyle.FONT_PLAIN_13);
         taSummary.setLineWrap(true);
         taSummary.setWrapStyleWord(true);
         taSummary.setMargin(new Insets(10, 10, 10, 10));
@@ -1363,7 +1363,7 @@ public class NovelDetailPage {
         bottomControlPanel.setBackground(new Color(245, 247, 249));
 
         JButton btnSave = new JButton("저장하기");
-        btnSave.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnSave.setFont(UiStyle.FONT_BOLD_12);
         btnSave.setBackground(new Color(0, 120, 230));
         btnSave.setForeground(Color.WHITE);
         btnSave.setFocusPainted(false);

@@ -3,7 +3,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
-import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -36,6 +35,8 @@ public class ShortStoryPanel extends JPanel {
     private final int PAGE_SIZE = 10;
 
     private ArrayList<String> hiddenCategoryList = new ArrayList<>();
+
+    private final java.util.Map<String, Image> bannerCoverImageCache = new java.util.HashMap<>();
 
     private JButton btnPlatformSelect;          // 커스텀 드롭다운 버튼
     private String selectedPlatform = "전체 플랫폼"; // 현재 선택된 플랫폼 저장 변수
@@ -85,14 +86,14 @@ public class ShortStoryPanel extends JPanel {
             protected void paintComponent(Graphics g){
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(230, 245, 245));
+                g2.setColor(UiStyle.COLOR_MENU_HIGHLIGHT_BG);
                 g2.fillRoundRect(0, 0, getWidth(),getHeight(), getHeight(), getHeight());
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
         lblTotalCounter.setFont(new Font("맑은 고딕", Font.BOLD, 11));
-        lblTotalCounter.setForeground(new Color(0, 140, 140));
+        lblTotalCounter.setForeground(UiStyle.COLOR_ACCENT);
         lblTotalCounter.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
 
         leftTitleGroup.add(lblPageTitle);
@@ -116,8 +117,8 @@ public class ShortStoryPanel extends JPanel {
                 super.paintComponent(g);
             }
         };
-        btnPlatformSelect.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-        btnPlatformSelect.setForeground(new Color(0, 140, 140));
+        btnPlatformSelect.setFont(UiStyle.FONT_BOLD_12);
+        btnPlatformSelect.setForeground(UiStyle.COLOR_ACCENT);
         btnPlatformSelect.setContentAreaFilled(false);
         btnPlatformSelect.setBorderPainted(false);
         btnPlatformSelect.setPreferredSize(new Dimension(130, 32));
@@ -132,8 +133,8 @@ public class ShortStoryPanel extends JPanel {
 
             // 메뉴 아이템 공통 스타일 적용을 위한 헬퍼(디자인 엔진)
             java.util.function.Consumer<JMenuItem> styleMenuItem = (item) -> {
-                item.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-                item.setForeground(new Color(0, 140, 140));
+                item.setFont(UiStyle.FONT_PLAIN_13);
+                item.setForeground(UiStyle.COLOR_ACCENT);
                 item.setBackground(Color.WHITE);
                 item.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
 
@@ -181,7 +182,7 @@ public class ShortStoryPanel extends JPanel {
 
             // [플랫폼 관리] 특수 메뉴 (이모티콘 제거, 텍스트 전용)
             JMenuItem itemManage = new JMenuItem("플랫폼 관리");
-            itemManage.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+            itemManage.setFont(UiStyle.FONT_PLAIN_13);
             itemManage.setForeground(new Color(110, 115, 125)); // 일반 메뉴와 구분되도록 회색빛 적용
             itemManage.setBackground(new Color(250, 252, 253));
             itemManage.setOpaque(true);
@@ -208,7 +209,7 @@ public class ShortStoryPanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 // 소프트 그레이 테두리
-                g2.setColor(new Color(225, 228, 232));
+                g2.setColor(UiStyle.COLOR_BORDER_GRAY);
                 g2.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 12, 12);
                 g2.dispose();
             }
@@ -217,7 +218,7 @@ public class ShortStoryPanel extends JPanel {
         sortCombo.setOpaque(false);
         sortCombo.setBackground(Color.WHITE);
         sortCombo.setPreferredSize(new Dimension(135, 32));
-        sortCombo.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        sortCombo.setFont(UiStyle.FONT_BOLD_12);
         sortCombo.setForeground(new Color(60, 65, 75));
         sortCombo.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 5));
         sortCombo.setFocusable(false);
@@ -252,7 +253,7 @@ public class ShortStoryPanel extends JPanel {
                 JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 c.setBackground(isSelected ? new Color(240, 240, 240) : Color.WHITE); // 선택 시 연한 회색
                 c.setForeground(new Color(60, 65, 75));
-                c.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                c.setFont(UiStyle.FONT_PLAIN_12);
                 c.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                 return c;
             }
@@ -274,7 +275,7 @@ public class ShortStoryPanel extends JPanel {
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
 
                 // 테두리 드로잉 (연한 회색)
-                g2.setColor(new Color(225, 228, 232));
+                g2.setColor(UiStyle.COLOR_BORDER_GRAY);
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
 
                 g2.dispose();
@@ -284,7 +285,7 @@ public class ShortStoryPanel extends JPanel {
         searchField.setOpaque(false);
         searchField.setPreferredSize(new Dimension(195, 32));
         searchField.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-        searchField.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        searchField.setFont(UiStyle.FONT_PLAIN_12);
         searchField.setForeground(Color.GRAY);
 
         // 안쪽 여백 설정 (텍스트가 둥근 테두리에 너무 붙지 않게 함)
@@ -373,15 +374,15 @@ public class ShortStoryPanel extends JPanel {
             JLabel lineLabel = new JLabel(infoLines[i]);
 
             if (i == 0) {
-                lineLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-                lineLabel.setForeground(new Color(0, 140, 140));
+                lineLabel.setFont(UiStyle.FONT_BOLD_13);
+                lineLabel.setForeground(UiStyle.COLOR_ACCENT);
             }
             else if (infoLines[i].contains("부분 일치")) {
-                lineLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+                lineLabel.setFont(UiStyle.FONT_PLAIN_11);
                 lineLabel.setForeground(new Color(130, 130, 130));
             }
             else {
-                lineLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                lineLabel.setFont(UiStyle.FONT_PLAIN_12);
                 lineLabel.setForeground(new Color(60, 60, 60));
             }
             tipContainer.add(lineLabel);
@@ -506,7 +507,7 @@ public class ShortStoryPanel extends JPanel {
 
         // 구분선 라벨
         JLabel lblDivider = new JLabel("|");
-        lblDivider.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblDivider.setFont(UiStyle.FONT_PLAIN_11);
         lblDivider.setForeground(new Color(200, 205, 210));
 
         // 안내 아이콘 추가
@@ -554,11 +555,11 @@ public class ShortStoryPanel extends JPanel {
 
         //실시간 원작 검색창 배치
         leftWorkSearchField = new JTextField();
-        leftWorkSearchField.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        leftWorkSearchField.setFont(UiStyle.FONT_PLAIN_12);
         leftWorkSearchField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 32));
         leftWorkSearchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         leftWorkSearchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(225, 228, 232), 1, true),
+                BorderFactory.createLineBorder(UiStyle.COLOR_BORDER_GRAY, 1, true),
                 BorderFactory.createEmptyBorder(0, 10, 0, 10)
         ));
 
@@ -691,7 +692,7 @@ public class ShortStoryPanel extends JPanel {
         //만약 남은 작품이 있다면 [더보기 V] 버튼 부착
         if(filteredCategories.size() > visibleCategoryCount){
             JButton btnMoreCat = new JButton("더보기 V");
-            btnMoreCat.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+            btnMoreCat.setFont(UiStyle.FONT_PLAIN_12);
             btnMoreCat.setForeground(Color.GRAY);
             btnMoreCat.setAlignmentX(Component.CENTER_ALIGNMENT);
             btnMoreCat.setContentAreaFilled(false);
@@ -753,18 +754,26 @@ public class ShortStoryPanel extends JPanel {
                 }
 
                 if (coverImg != null) {
-                    // 이미지가 있으면 그리기
-                    try {
-                        Image img = javax.imageio.ImageIO.read(coverImg);
+                    // 캐시에 있으면 파일을 다시 읽지 않고 즉시 사용
+                    Image img = bannerCoverImageCache.get(coverImg.getAbsolutePath());
+                    if (img == null) {
+                        try {
+                            img = javax.imageio.ImageIO.read(coverImg);
+                            if (img != null) bannerCoverImageCache.put(coverImg.getAbsolutePath(), img);
+                        } catch (IOException e) { /* 로딩 실패 시 기본색 */ }
+                    }
+                    if (img != null) {
                         g2.drawImage(img, 0, 0, getWidth(), getHeight(), null);
-                    } catch (IOException e) { /* 로딩 실패 시 기본색 */ }
+                    }
                 } else {
                     // 이미지가 없으면 기존 회색 박스
-                    g2.setColor(new Color(220, 224, 228));
-                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
+                    g2.setColor(new Color(235, 238, 242));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+
                     g2.setFont(new Font("맑은 고딕", Font.BOLD, 10));
                     g2.setColor(new Color(160, 165, 175));
-                    g2.drawString("표지", 4, 24);
+
+                    g2.drawString("표지", 14, 32);
                 }
                 //만약 이미지 스캔 파일 구조가 구축되어 있다면 렌더 스펙 확장 지점
                 g2.dispose();
@@ -775,12 +784,12 @@ public class ShortStoryPanel extends JPanel {
 
         JLabel lblName = new JLabel(groupName);
         lblName.setFont(new Font("맑은 고딕", selectedCategory.equals(groupName) ? Font.BOLD : Font.PLAIN, 12));
-        lblName.setForeground(selectedCategory.equals(groupName) ? new Color(0, 140, 140) : new Color(60, 65, 75));
+        lblName.setForeground(selectedCategory.equals(groupName) ? UiStyle.COLOR_ACCENT : new Color(60, 65, 75));
 
         //[우측]: 해당 원작이 품고 있는 전체 단편/썰 총 개수 스캔 카운터 엔진 호출
         int totalCount = countTotalFilesForWork(groupName);
         JLabel lblCount = new JLabel(totalCount > 0 ? String.format("%,d", totalCount) : "");
-        lblCount.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblCount.setFont(UiStyle.FONT_PLAIN_11);
         lblCount.setForeground(new Color(140, 150, 160));
 
         JPanel textGroup = new JPanel(new BorderLayout());
@@ -836,6 +845,14 @@ public class ShortStoryPanel extends JPanel {
         //1단계: 하드디스크 스캔 및 메모리 리스트 동기화(즐겨찾기 탭 분리 처리 추가)
         ArrayList<Snippet> currentScannedList = new ArrayList<>();
 
+        //성능 최적화: 파일마다 snippetList 전체를 다시 훑지 않도록, 원작+유형+파일명 키로 미리 한 번만 매핑
+        java.util.Map<String, Snippet> metadataLookup = new java.util.HashMap<>();
+        for(Snippet sn : snippetList){
+            if(sn.getFolderPath() != null){
+                metadataLookup.put(sn.getParentWork() + "|" + sn.getSnippetType() + "|" + sn.getFolderPath(), sn);
+            }
+        }
+
         if(selectedTab.equals("즐겨찾기")){
             File favFile = new File("C:\\novel\\favorite_shorts.txt");
             if(favFile.exists()){
@@ -875,8 +892,8 @@ public class ShortStoryPanel extends JPanel {
                                 int words = (int) (f.length() / 2.5);
 
                                 Snippet meta = null;
-                                if(type.equals("연작")) meta = findSaveMetadata(work, type, seriesName);
-                                else meta = findSaveMetadata(work, type, parts[2]);
+                                if(type.equals("연작")) meta = metadataLookup.get(work + "|" + type + "|" + seriesName);
+                                else meta = metadataLookup.get(work + "|" + type + "|" + parts[2]);
 
                                 String author = meta != null ? meta.getAuthor() : "작자미상";
                                 String plat = meta != null ? meta.getPlatform() : "기타";
@@ -918,7 +935,7 @@ public class ShortStoryPanel extends JPanel {
                                         for(File tf : txtFiles) totalWorks += (int)(tf.length() / 2.5);
 
                                         //메타데이터 매핑 매커니즘 바인딩(폴더 네임을 키값 파일명으로 우회 활용)
-                                        Snippet meta = findSaveMetadata(work, "연작", subWorkName);
+                                        Snippet meta = metadataLookup.get(work + "|연작|" + subWorkName);
                                         if(meta == null){
                                             meta = new Snippet(subWorkName, "작자미상", "포스타입", subWorkName, work,
                                                     "연작", totalWorks, "", "", "기록없음", false);
@@ -942,7 +959,7 @@ public class ShortStoryPanel extends JPanel {
                                     String fileTitle = f.getName().replace(".txt", "");
                                     int words = (int) (f.length() / 2.5);       //바이트 용량 역산 글자수 유추
 
-                                    Snippet meta = findSaveMetadata(work, type, f.getName());   //shorts_data.txt에 유저가 보정했던 작가/키워드 주석 스냅샷이 있는지 검증 매핑
+                                    Snippet meta = metadataLookup.get(work + "|" + type + "|" + f.getName());   //shorts_data.txt에 유저가 보정했던 작가/키워드 주석 스냅샷이 있는지 검증 매핑
                                     if(meta == null){   //기존 기록이 없는 태초의 신규 파일은 순정 기본값으로 세팅
                                         meta = new Snippet(fileTitle, "작자미상", "포스타입", f.getName(), work, type, words, "", "", "기록 없음", false);
                                     } else{
@@ -1054,11 +1071,17 @@ public class ShortStoryPanel extends JPanel {
                 }
 
                 if (coverImg != null) {
-                    // 이미지가 있으면 그리기
-                    try {
-                        Image img = javax.imageio.ImageIO.read(coverImg);
+                    // 캐시에 있으면 파일을 다시 읽지 않고 즉시 사용
+                    Image img = bannerCoverImageCache.get(coverImg.getAbsolutePath());
+                    if (img == null) {
+                        try {
+                            img = javax.imageio.ImageIO.read(coverImg);
+                            if (img != null) bannerCoverImageCache.put(coverImg.getAbsolutePath(), img);
+                        } catch (IOException e) { /* 로딩 실패 시 기본색 */ }
+                    }
+                    if (img != null) {
                         g2.drawImage(img, 0, 0, getWidth(), getHeight(), null);
-                    } catch (IOException e) { /* 로딩 실패 시 기본색 */ }
+                    }
                 } else {
                     // 이미지가 없으면 기존 회색 박스
                     g2.setColor(new Color(235, 238, 242));
@@ -1231,7 +1254,7 @@ public class ShortStoryPanel extends JPanel {
                 }
             };
             tabBtn.setFont(new Font("맑은 고딕", selectedTab.equals(tabName) ? Font.BOLD : Font.PLAIN, 13));
-            tabBtn.setForeground(selectedTab.equals(tabName) ? new Color(0, 140, 140) : new Color(110, 115, 125));
+            tabBtn.setForeground(selectedTab.equals(tabName) ? UiStyle.COLOR_ACCENT : new Color(110, 115, 125));
             tabBtn.setContentAreaFilled(false);
             tabBtn.setBorderPainted(false);
             tabBtn.setFocusPainted(false);
@@ -1346,7 +1369,7 @@ public class ShortStoryPanel extends JPanel {
             Color bgTheme;
             Color fgTheme;
             if(typeText.equals("단편")){
-                bgTheme = new Color(235, 247, 245); fgTheme = new Color(0, 140, 140);
+                bgTheme = new Color(235, 247, 245); fgTheme = UiStyle.COLOR_ACCENT;
             } else if(typeText.equals("썰")){
                 bgTheme = new Color(255, 243, 230); fgTheme = new Color(225, 120, 30);
             } else{ //연작
@@ -1388,7 +1411,7 @@ public class ShortStoryPanel extends JPanel {
 
             //제목 레이블을 웹 링크 스타일로 확장 연동 (제목 클릭하면 뷰어 열림)
             JLabel lblTitle = new JLabel(sn.getTitle(), JLabel.LEFT);
-            lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+            lblTitle.setFont(UiStyle.FONT_BOLD_13);
             lblTitle.setForeground(new Color(40, 45, 50));
             lblTitle.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
@@ -1486,7 +1509,7 @@ public class ShortStoryPanel extends JPanel {
             } else{
                 lblSubKeys.setText("등록된 키워드 태그가 없습니다.");
             }
-            lblSubKeys.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+            lblSubKeys.setFont(UiStyle.FONT_PLAIN_11);
             lblSubKeys.setForeground(new Color(0, 140, 180));
 
             titleGridCell.add(lblTitle);
@@ -1497,21 +1520,21 @@ public class ShortStoryPanel extends JPanel {
 
             // 3. 분량(글자 수) 정렬 칸(85px)
             JLabel lblRowWords = new JLabel(String.format("%,d자", sn.getWordCount()), JLabel.CENTER);
-            lblRowWords.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+            lblRowWords.setFont(UiStyle.FONT_PLAIN_12);
             lblRowWords.setForeground(Color.LIGHT_GRAY);
             lblRowWords.setPreferredSize(new Dimension(85, 54));
             rGbc.gridx = 2; rGbc.weightx = 0.0; row.add(lblRowWords, rGbc);
 
             // 4. 작가 닉네임(110px)
             JLabel lblRowAuth = new JLabel(sn.getAuthor(), JLabel.CENTER);
-            lblRowAuth.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+            lblRowAuth.setFont(UiStyle.FONT_PLAIN_12);
             lblRowAuth.setForeground(new Color(70, 75, 85));
             lblRowAuth.setPreferredSize(new Dimension(110, 54));
             rGbc.gridx = 3; rGbc.weightx = 0.0; row.add(lblRowAuth, rGbc);
 
             // 5. 플랫폼 출처 칸(100px 고정)
             JLabel lblPlat = new JLabel(sn.getPlatform(), JLabel.CENTER);
-            lblPlat.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+            lblPlat.setFont(UiStyle.FONT_PLAIN_12);
             lblPlat.setForeground(new Color(110, 115, 125));
             lblPlat.setPreferredSize(new Dimension(95, 54));
             rGbc.gridx = 4; rGbc.weightx = 0.0; row.add(lblPlat, rGbc);
@@ -1588,8 +1611,8 @@ public class ShortStoryPanel extends JPanel {
 
         // [<] 이전 블록 버튼 : 누르면 무조건 이전 묶음의 첫 페이지로 대형 도약
         JButton btnPrevBlock = new JButton("<");
-        btnPrevBlock.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-        btnPrevBlock.setForeground(startPage > 1 ? new Color(0, 140, 140) : Color.LIGHT_GRAY);
+        btnPrevBlock.setFont(UiStyle.FONT_BOLD_12);
+        btnPrevBlock.setForeground(startPage > 1 ? UiStyle.COLOR_ACCENT : Color.LIGHT_GRAY);
         btnPrevBlock.setContentAreaFilled(false);
         btnPrevBlock.setBorderPainted(false);
         btnPrevBlock.setFocusPainted(false);
@@ -1638,8 +1661,8 @@ public class ShortStoryPanel extends JPanel {
 
         //[>] 다음 블록 버튼 : 누르면 무조건 다음 묶음의 첫 페이지(6, 11, 16, ...)으로 점프
         JButton btnNextBlock = new JButton(">");
-        btnNextBlock.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-        btnNextBlock.setForeground(endPage < totalPages ? new Color(0, 140, 140) : Color.LIGHT_GRAY);
+        btnNextBlock.setFont(UiStyle.FONT_BOLD_12);
+        btnNextBlock.setForeground(endPage < totalPages ? UiStyle.COLOR_ACCENT : Color.LIGHT_GRAY);
         btnNextBlock.setContentAreaFilled(false);
         btnNextBlock.setBorderPainted(false);
         btnNextBlock.setFocusPainted(false);
@@ -1839,14 +1862,14 @@ public class ShortStoryPanel extends JPanel {
         topPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         JTextField tfNewPlatform = new JTextField();
-        tfNewPlatform.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        tfNewPlatform.setFont(UiStyle.FONT_PLAIN_12);
         tfNewPlatform.setPreferredSize(new Dimension(0, 30));
 
         JButton btnAdd = new JButton("추가");
-        btnAdd.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-        btnAdd.setForeground(new Color(0, 140, 140));
+        btnAdd.setFont(UiStyle.FONT_BOLD_12);
+        btnAdd.setForeground(UiStyle.COLOR_ACCENT);
         btnAdd.setContentAreaFilled(false);
-        btnAdd.setBorder(BorderFactory.createLineBorder(new Color(0, 140, 140), 1, true));
+        btnAdd.setBorder(BorderFactory.createLineBorder(UiStyle.COLOR_ACCENT, 1, true));
         btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnAdd.setPreferredSize(new Dimension(50, 30));
 
@@ -1877,8 +1900,8 @@ public class ShortStoryPanel extends JPanel {
                     ));
 
                     JLabel lblName = new JLabel(p);
-                    lblName.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-                    lblName.setForeground(new Color(50, 55, 60));
+                    lblName.setFont(UiStyle.FONT_PLAIN_13);
+                    lblName.setForeground(UiStyle.COLOR_LABEL_TEXT);
 
                     JButton btnDel = new JButton("삭제");
                     btnDel.setFont(new Font("맑은 고딕", Font.BOLD, 11));

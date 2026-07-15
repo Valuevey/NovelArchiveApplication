@@ -263,11 +263,11 @@ public class NovelViewerPage{
         //회차 입력창(JTextField)의 테두리를 각진 선 -> 회색 라운드선 스타일로 바꿈
         chapterInputField.setMaximumSize(new Dimension(42, 28));
         chapterInputField.setPreferredSize(new Dimension(42, 28));
-        chapterInputField.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        chapterInputField.setFont(UiStyle.FONT_BOLD_12);
 
         chapterInputField.setForeground(new Color(65, 70, 80));
         chapterInputField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(225, 228, 232), 1, true),
+                BorderFactory.createLineBorder(UiStyle.COLOR_BORDER_GRAY, 1, true),
                 BorderFactory.createEmptyBorder(2, 4, 2, 4)
         ));
 
@@ -281,8 +281,8 @@ public class NovelViewerPage{
                 btn.setBorderPainted(false);
                 btn.setContentAreaFilled(false);        //배경 투명화
                 btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                btn.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-                btn.setForeground(new Color(0, 140, 140));
+                btn.setFont(UiStyle.FONT_BOLD_12);
+                btn.setForeground(UiStyle.COLOR_ACCENT);
 
                 if(btn == btnGo){
                     btn.setPreferredSize(new Dimension(55, 28));
@@ -660,7 +660,7 @@ public class NovelViewerPage{
 
         searchField = new JTextField(15);
         searchStatusLabel = new JLabel("0/0");
-        searchStatusLabel.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        searchStatusLabel.setFont(UiStyle.FONT_BOLD_12);
 
         JButton btnPrevSearch = new JButton("▲");
         JButton btnNextSearch = new JButton("▼");
@@ -668,7 +668,7 @@ public class NovelViewerPage{
 
         JButton[] sBtns = {btnPrevSearch, btnNextSearch, btnCloseSearch};
         for(JButton b : sBtns){
-            b.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            b.setFont(UiStyle.FONT_BOLD_12);
             b.setFocusPainted(false);
             b.setContentAreaFilled(false);
             b.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -805,7 +805,7 @@ public class NovelViewerPage{
         final Color backupBg = currentBgColor;
         final Color backupFg = currentFgColor;
 
-        Color themeCyan = new Color(0, 140, 140);
+        Color themeCyan = UiStyle.COLOR_ACCENT;
         Color borderGray = new Color(215, 222, 228);
         Color lineCyan = new Color(200, 225, 225);  //연한 청록색 점선용 컬러
 
@@ -839,7 +839,7 @@ public class NovelViewerPage{
 
         JLabel lblSizeTitle = new JLabel("글자 크기");
         lblSizeTitle.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        lblSizeTitle.setForeground(new Color(50, 55, 60));
+        lblSizeTitle.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblSizeTitle.setPreferredSize(new Dimension(140, 40));
         sizeRow.add(lblSizeTitle);
 
@@ -869,7 +869,7 @@ public class NovelViewerPage{
         //중앙 숫자 입력 텍스트 필드 생성
         JTextField tfSizeInput = new JTextField(String.valueOf(currentFontSize), 3);
         tfSizeInput.setHorizontalAlignment(JTextField.CENTER);
-        tfSizeInput.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        tfSizeInput.setFont(UiStyle.FONT_PLAIN_13);
         tfSizeInput.setForeground(themeCyan);
         tfSizeInput.setPreferredSize(new Dimension(55, 32));
         tfSizeInput.setBorder(BorderFactory.createCompoundBorder(
@@ -915,14 +915,14 @@ public class NovelViewerPage{
 
         JLabel lblFontTitle = new JLabel("글꼴 선택");
         lblFontTitle.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        lblFontTitle.setForeground(new Color(50, 55, 60));
+        lblFontTitle.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblFontTitle.setPreferredSize(new Dimension(140, 45));
         fontRow.add(lblFontTitle);
 
         String[] fonts = {"맑은 고딕", "나눔고딕", "바탕체", "돋움", "굴림"};
         JComboBox<String> fontComboBox = new JComboBox<>(fonts);
         fontComboBox.setSelectedItem(currentFontName);  //현재 지정 중인 폰트명이 자동 포커싱되도록 유도
-        fontComboBox.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        fontComboBox.setFont(UiStyle.FONT_PLAIN_13);
         fontComboBox.setPreferredSize(new Dimension(198, 32));
 
         fontComboBox.setBackground(Color.WHITE);
@@ -950,7 +950,7 @@ public class NovelViewerPage{
 
         JLabel lblThemeTitle = new JLabel("색상 테마");
         lblThemeTitle.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        lblThemeTitle.setForeground(new Color(50, 55, 60));
+        lblThemeTitle.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblThemeTitle.setPreferredSize(new Dimension(140, 45));
         themeRow.add(lblThemeTitle);
 
@@ -961,7 +961,7 @@ public class NovelViewerPage{
         JButton[] themeButtons = {btnThemeWhite, btnThemeSepia, btnThemeDark};
         for(JButton btn : themeButtons){
             btn.setPreferredSize(new Dimension(70, 32));
-            btn.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            btn.setFont(UiStyle.FONT_BOLD_12);
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
             btn.setContentAreaFilled(false);
@@ -973,9 +973,9 @@ public class NovelViewerPage{
         //각 테마 버튼에 고유한 배경/글자색 주입, 선택시 청록색 테두리
         java.util.function.Consumer<String> refreshThemeButtonStyles = (activeTheme) -> {
             // 1. 선택된 활성화 상태에 따른 글자(Foreground) 색상 동적 매핑
-            btnThemeWhite.setForeground(activeTheme.equals("흰색") ? new Color(33, 33, 33) : new Color(140, 145, 155));
+            btnThemeWhite.setForeground(activeTheme.equals("흰색") ? new Color(33, 33, 33) : UiStyle.COLOR_ICON_INACTIVE);
             btnThemeSepia.setForeground(activeTheme.equals("베이지") ? new Color(60, 52, 44) : new Color(120, 125, 135));
-            btnThemeDark.setForeground(activeTheme.equals("검정") ? Color.WHITE : new Color(140, 145, 155));
+            btnThemeDark.setForeground(activeTheme.equals("검정") ? Color.WHITE : UiStyle.COLOR_ICON_INACTIVE);
 
             btnThemeWhite.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
                 @Override public void paint(Graphics g, JComponent c) {
@@ -1029,7 +1029,7 @@ public class NovelViewerPage{
 
                     g2.dispose();
 
-                    g.setColor(activeTheme.equals("검정") ? Color.WHITE : new Color(140, 145, 155));
+                    g.setColor(activeTheme.equals("검정") ? Color.WHITE : UiStyle.COLOR_ICON_INACTIVE);
                     super.paint(g, c);
                 }
             });
@@ -1065,7 +1065,7 @@ public class NovelViewerPage{
         JButton[] bottomBtns = {btnCancel, btnConfirm};
         for(JButton btn : bottomBtns){
             btn.setPreferredSize(new Dimension(80, 32));
-            btn.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+            btn.setFont(UiStyle.FONT_BOLD_13);
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
             btn.setContentAreaFilled(false);
@@ -1456,8 +1456,8 @@ public class NovelViewerPage{
         java.util.function.Function<String, JMenuItem> createMenuItem = (text) -> {
             JMenuItem item = new JMenuItem(text);
             item.setBackground(Color.WHITE);
-            item.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-            item.setForeground(new Color(50, 55, 60));
+            item.setFont(UiStyle.FONT_BOLD_12);
+            item.setForeground(UiStyle.COLOR_LABEL_TEXT);
             item.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
             item.setCursor(new Cursor(Cursor.HAND_CURSOR));
             return item;
@@ -1465,7 +1465,7 @@ public class NovelViewerPage{
 
         // 1. [+ 추가] 버튼
         JMenuItem addMenu = createMenuItem.apply("+ 추가");
-        addMenu.setForeground(new Color(0, 140, 140));
+        addMenu.setForeground(UiStyle.COLOR_ACCENT);
         addMenu.addActionListener(e -> {
             String input = JOptionPane.showInputDialog(parentFrame, "추가할 번역본 폴더의 이름을 입력하세요.\n(예: 영어, 일본어 등)");
             if(input != null && !input.trim().isEmpty()){

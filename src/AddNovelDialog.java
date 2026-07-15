@@ -4,11 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 public class AddNovelDialog extends JDialog {
-    private JTextField tfTitle;
-    private JTextField tfAuthor;
-    private JTextField tfGenre;
     private JTextField tfKeywords;
-    private JTextArea taDescription;
     private JTextField tfFolderPath;
     private JTextField tfCoverPath;
 
@@ -45,8 +41,8 @@ public class AddNovelDialog extends JDialog {
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
-        Color themeCyan = new Color(0, 140, 140);
-        Color borderGray = new Color(225, 228, 232);
+        Color themeCyan = UiStyle.COLOR_ACCENT;
+        Color borderGray = UiStyle.COLOR_BORDER_GRAY;
 
         //1. 메인 컨테이너 패널(BoxLayout을 이용해 위에서 아래롤 컴포넌트를 쌓음)
         JPanel contentGridPanel = new JPanel();
@@ -62,8 +58,8 @@ public class AddNovelDialog extends JDialog {
 
         //소설 제목
         JLabel lblTitle = new JLabel("소설 제목 *");
-        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblTitle.setForeground(new Color(50, 55, 60));
+        lblTitle.setFont(UiStyle.FONT_BOLD_13);
+        lblTitle.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblTitle.setPreferredSize(new Dimension(130, 36));
 
 
@@ -80,7 +76,7 @@ public class AddNovelDialog extends JDialog {
             }
         };
         tfTitle.setOpaque(false);
-        tfTitle.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        tfTitle.setFont(UiStyle.FONT_PLAIN_13);
         tfTitle.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
 
         rowTitlePanel.add(lblTitle, BorderLayout.WEST);
@@ -96,8 +92,8 @@ public class AddNovelDialog extends JDialog {
 
         //작가 이름
         JLabel lblAuthor = new JLabel("작가 이름");
-        lblAuthor.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblAuthor.setForeground(new Color(50, 55, 60));
+        lblAuthor.setFont(UiStyle.FONT_BOLD_13);
+        lblAuthor.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblAuthor.setPreferredSize(new Dimension(130, 36));
 
         JTextField tfAuthor = new JTextField() {
@@ -114,7 +110,7 @@ public class AddNovelDialog extends JDialog {
             }
         };
         tfAuthor.setOpaque(false);
-        tfAuthor.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        tfAuthor.setFont(UiStyle.FONT_PLAIN_13);
         tfAuthor.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
 
         rowAuthorPanel.add(lblAuthor, BorderLayout.WEST);
@@ -130,8 +126,8 @@ public class AddNovelDialog extends JDialog {
 
         // 장르 입력 구역
         JLabel lblGenre = new JLabel("장르 (ex. 판타지)");
-        lblGenre.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblGenre.setForeground(new Color(50, 55, 60));
+        lblGenre.setFont(UiStyle.FONT_BOLD_13);
+        lblGenre.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblGenre.setPreferredSize(new Dimension(130, 36));
 
         JTextField tfGenre = new JTextField() {
@@ -148,7 +144,7 @@ public class AddNovelDialog extends JDialog {
             }
         };
         tfGenre.setOpaque(false);
-        tfGenre.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        tfGenre.setFont(UiStyle.FONT_PLAIN_13);
         tfGenre.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
 
         rowGenrePanel.add(lblGenre, BorderLayout.WEST);
@@ -174,8 +170,8 @@ public class AddNovelDialog extends JDialog {
         rowPlatformMasterPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE, fixedPlatformHeight));
 
         JLabel lblPlatformGroup = new JLabel("<html><body>출신 플랫폼<br><font size='3' color='#888888'>(중복 가능)</font></body></html>");
-        lblPlatformGroup.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblPlatformGroup.setForeground(new Color(50, 55, 60));
+        lblPlatformGroup.setFont(UiStyle.FONT_BOLD_13);
+        lblPlatformGroup.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblPlatformGroup.setPreferredSize(new Dimension(130, 45));
 
         java.util.List<JCheckBox> cryptoCheckBoxes = new java.util.ArrayList<>();
@@ -215,7 +211,7 @@ public class AddNovelDialog extends JDialog {
             };
             chk.setOpaque(false);
             chk.setFocusPainted(false);
-            chk.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+            chk.setFont(UiStyle.FONT_PLAIN_12);
             chk.setForeground(new Color(60, 65, 75));
             chk.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
             chk.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -262,22 +258,18 @@ public class AddNovelDialog extends JDialog {
 
         // 플랫폼이 7개 이상일 때만 우측에 배동될 커스텀 V자 화살표 버튼
         if(totalPlatforms > 6){
-            JButton btnToggleExtend = new JButton(){
-                private boolean isExpanded = false; //화살표 방향 드로잉용
+            boolean[] isExpandedFlag = {false};   //화살표/팝업 상태 공유용 (람다가 캡처할 수 있게 배열로 감쌈)
 
+            JButton btnToggleExtend = new JButton(){
                 @Override
                 protected void paintComponent(Graphics g){
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
                     g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                     g2.setColor(new Color(120, 130, 140));
-
                     int cx = getWidth()/2;
                     int cy = getHeight()/2;
-
-                    //플래그 상태에 따라 화살표 꺽쇠 문양 방향을 실시간 반전 드로잉
-                    if(!isExpanded){
+                    if(!isExpandedFlag[0]){
                         g2.drawLine(cx - 5, cy - 2, cx, cy + 3);
                         g2.drawLine(cx, cy + 3, cx + 5, cy - 2);
                     } else{
@@ -291,26 +283,16 @@ public class AddNovelDialog extends JDialog {
             btnToggleExtend.setContentAreaFilled(false);
             btnToggleExtend.setBorderPainted(false);
             btnToggleExtend.setFocusPainted(false);
-            btnToggleExtend.setPreferredSize(new Dimension(25, 72));    //2줄 높이
+            btnToggleExtend.setPreferredSize(new Dimension(25, 72));
             btnToggleExtend.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            // V버튼 클릭 시 레이아웃 제한 높이를 실시간 재연산하여 화면을 늘리고 줄이는 리스너를 결합
             btnToggleExtend.addActionListener(e ->{
-                try {
-                    java.lang.reflect.Field field = btnToggleExtend.getClass().getDeclaredField("isExpanded");
-                    field.setAccessible(true);
-                    boolean currentVal = field.getBoolean(btnToggleExtend);
-
-                    if (!currentVal) {
-                        // 팝업창을 플랫폼 상자 바로 아랫단 축에 맞춰 레이어링 스위칭 출격합니다.
-                        platformDropdownPopup.show(platformGridWrapper, 0, platformGridWrapper.getHeight() + 4);
-                        field.set(btnToggleExtend, true);
-                    } else {
-                        platformDropdownPopup.setVisible(false);
-                        field.set(btnToggleExtend, false);
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                if (!isExpandedFlag[0]) {
+                    platformDropdownPopup.show(platformGridWrapper, 0, platformGridWrapper.getHeight() + 4);
+                    isExpandedFlag[0] = true;
+                } else {
+                    platformDropdownPopup.setVisible(false);
+                    isExpandedFlag[0] = false;
                 }
                 btnToggleExtend.repaint();
             });
@@ -321,20 +303,10 @@ public class AddNovelDialog extends JDialog {
                 @Override
                 public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
                     SwingUtilities.invokeLater(() -> {
-                        try {
-                            java.lang.reflect.Field field = btnToggleExtend.getClass().getDeclaredField("isExpanded");
-                            field.setAccessible(true);
-
-                            Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-                            SwingUtilities.convertPointFromScreen(mousePoint, btnToggleExtend);
-
-                            if (btnToggleExtend.contains(mousePoint)) {
-                                field.set(btnToggleExtend, true);
-                            } else {
-                                field.set(btnToggleExtend, false);
-                            }
-                            btnToggleExtend.repaint();
-                        } catch (Exception ex) { ex.printStackTrace(); }
+                        Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+                        SwingUtilities.convertPointFromScreen(mousePoint, btnToggleExtend);
+                        isExpandedFlag[0] = btnToggleExtend.contains(mousePoint);
+                        btnToggleExtend.repaint();
                     });
                 }
                 @Override
@@ -375,7 +347,7 @@ public class AddNovelDialog extends JDialog {
                 } else{
                     g2.setColor(new Color(250, 252, 252));
                     g2.fillRoundRect(0, 0, getWidth()-1, getHeight()-1, 8, 8);
-                    g2.setColor(new Color(225, 228, 232));
+                    g2.setColor(UiStyle.COLOR_BORDER_GRAY);
                 }
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
                 g2.dispose();
@@ -388,13 +360,13 @@ public class AddNovelDialog extends JDialog {
         //완결 체크박스 디자인
         cbCompleted.setOpaque(false);
         cbCompleted.setFocusPainted(false);
-        cbCompleted.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        cbCompleted.setFont(UiStyle.FONT_BOLD_12);
         cbCompleted.setForeground(new Color(210, 50, 50));
         cbCompleted.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // 연재중단 체크박스 디자인
         cbHiatus.setOpaque(false);
-        cbHiatus.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        cbHiatus.setFont(UiStyle.FONT_BOLD_12);
         cbHiatus.setForeground(new Color(110, 90, 200));
         cbHiatus.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
@@ -430,8 +402,8 @@ public class AddNovelDialog extends JDialog {
         rowKeywordsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
 
         JLabel lblKeywords = new JLabel("키워드 (쉼표 구분)");
-        lblKeywords.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblKeywords.setForeground(new Color(50, 55, 60));
+        lblKeywords.setFont(UiStyle.FONT_BOLD_13);
+        lblKeywords.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblKeywords.setPreferredSize(new Dimension(130, 36));
 
         tfKeywords = new JTextField() {
@@ -448,7 +420,7 @@ public class AddNovelDialog extends JDialog {
             }
         };
         tfKeywords.setOpaque(false);
-        tfKeywords.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        tfKeywords.setFont(UiStyle.FONT_PLAIN_12);
         tfKeywords.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
 
         rowKeywordsPanel.add(lblKeywords, BorderLayout.WEST);
@@ -463,12 +435,12 @@ public class AddNovelDialog extends JDialog {
         rowDescPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
 
         JLabel lblDescription = new JLabel("작품 소개글");
-        lblDescription.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblDescription.setForeground(new Color(50, 55, 60));
+        lblDescription.setFont(UiStyle.FONT_BOLD_13);
+        lblDescription.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblDescription.setPreferredSize(new Dimension(130, 130));
 
         JTextArea taDescription = new JTextArea();
-        taDescription.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        taDescription.setFont(UiStyle.FONT_PLAIN_12);
         taDescription.setLineWrap(true);
 
         JScrollPane descScrollPane = new JScrollPane(taDescription) {
@@ -500,8 +472,8 @@ public class AddNovelDialog extends JDialog {
         rowFolderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
         JLabel lblFolder = new JLabel("소설 텍스트 폴더 *");
-        lblFolder.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblFolder.setForeground(new Color(50, 55, 60));
+        lblFolder.setFont(UiStyle.FONT_BOLD_13);
+        lblFolder.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblFolder.setPreferredSize(new Dimension(130, 32));
 
         // 입력창과 경고 문구를 세로로 묶을 래퍼 패널 생성
@@ -531,7 +503,7 @@ public class AddNovelDialog extends JDialog {
         };
         tfFolderPath.setOpaque(false);
         tfFolderPath.setEditable(false);
-        tfFolderPath.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        tfFolderPath.setFont(UiStyle.FONT_PLAIN_12);
         tfFolderPath.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
         // 기존 정보가 없으면 플레이스홀더 출력 (신규 등록 시)
@@ -556,7 +528,7 @@ public class AddNovelDialog extends JDialog {
                 super.paintComponent(g);
             }
         };
-        btnSelectFolder.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnSelectFolder.setFont(UiStyle.FONT_BOLD_12);
         btnSelectFolder.setForeground(themeCyan);
         btnSelectFolder.setContentAreaFilled(false);
         btnSelectFolder.setBorderPainted(false);
@@ -569,7 +541,7 @@ public class AddNovelDialog extends JDialog {
 
         // 특수문자 규칙 안내 레이블
         JLabel lblFolderRule = new JLabel("※ 제목에 특수문자(\\ / : * ? \" < > |)가 있다면 폴더명에선 밑줄(_)로 쓰세요.");
-        lblFolderRule.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblFolderRule.setFont(UiStyle.FONT_PLAIN_11);
         lblFolderRule.setForeground(new Color(220, 80, 80));    //붉은 색으로 강조
         lblFolderRule.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblFolderRule.setBorder(BorderFactory.createEmptyBorder(4, 2, 0, 0));
@@ -589,8 +561,8 @@ public class AddNovelDialog extends JDialog {
         rowCoverPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JLabel lblCover = new JLabel("표지 이미지 파일");
-        lblCover.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblCover.setForeground(new Color(50, 55, 60));
+        lblCover.setFont(UiStyle.FONT_BOLD_13);
+        lblCover.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblCover.setPreferredSize(new Dimension(130, 32));
 
         JPanel coverRowPanel = new JPanel(new BorderLayout(8, 0));
@@ -611,7 +583,7 @@ public class AddNovelDialog extends JDialog {
         };
         tfCoverPath.setOpaque(false);
         tfCoverPath.setEditable(false);
-        tfCoverPath.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        tfCoverPath.setFont(UiStyle.FONT_PLAIN_12);
         tfCoverPath.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
         JButton btnSelectCover = new JButton("찾기") {
@@ -627,7 +599,7 @@ public class AddNovelDialog extends JDialog {
                 super.paintComponent(g);
             }
         };
-        btnSelectCover.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnSelectCover.setFont(UiStyle.FONT_BOLD_12);
         btnSelectCover.setForeground(themeCyan);
         btnSelectCover.setContentAreaFilled(false);
         btnSelectCover.setBorderPainted(false);
@@ -685,7 +657,7 @@ public class AddNovelDialog extends JDialog {
                 super.paintComponent(g);
             }
         };
-        btnCancel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        btnCancel.setFont(UiStyle.FONT_BOLD_13);
         btnCancel.setForeground(themeCyan);
         btnCancel.setFocusPainted(false);
         btnCancel.setBorderPainted(false);
@@ -705,7 +677,7 @@ public class AddNovelDialog extends JDialog {
                 super.paintComponent(g);
             }
         };
-        btnSave.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        btnSave.setFont(UiStyle.FONT_BOLD_13);
         btnSave.setForeground(Color.WHITE);
         btnSave.setFocusPainted(false);
         btnSave.setBorderPainted(false);
@@ -815,11 +787,11 @@ public class AddNovelDialog extends JDialog {
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel label = new JLabel(labelText);
-        label.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        label.setFont(UiStyle.FONT_BOLD_12);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         textField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        textField.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        textField.setFont(UiStyle.FONT_PLAIN_13);
         textField.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         row.add(label);
@@ -836,7 +808,7 @@ public class AddNovelDialog extends JDialog {
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel label = new JLabel(labelText);
-        label.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        label.setFont(UiStyle.FONT_BOLD_12);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         component.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
@@ -867,7 +839,7 @@ public class AddNovelDialog extends JDialog {
         for(String platformName : AppSettings.getInstance().getCustomPlatforms()){
             JCheckBox chk = new JCheckBox(platformName);
             chk.setBackground(Color.WHITE);
-            chk.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+            chk.setFont(UiStyle.FONT_PLAIN_12);
 
             //정보 수정 모드일 경우 체크 상태 복원도 연산도 이곳에서 동시 수행
             if(existingNovel != null && existingNovel.getPlatform().contains(platformName)){

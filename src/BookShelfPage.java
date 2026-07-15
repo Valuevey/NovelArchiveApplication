@@ -19,8 +19,11 @@ public class BookShelfPage{
 
     //등록된 소설 객체들을 관리할 리스트
     private ArrayList<Novel> novelList = new ArrayList<>();
+    private final java.util.Map<String, ImageIcon> coverImageCache = new java.util.HashMap<>(); //표지 리사이징 캐시
     //메타데이터가 저장될 파일 경로
     private final String LIBRARY_DATA_FILE = "C:\\novel\\library_data.txt";
+
+
 
     //GridBagLayout에서 바둑판 배열의 행과 열을 추적하기 위한 카운터 변수
     private int cardCount = 0;
@@ -34,9 +37,6 @@ public class BookShelfPage{
     private JLabel lblTotalCounter;
 
     private JButton btnMyLibrary;
-
-    // 현재 선택된 좌측 메뉴 상태를 추적할 플래그 변수
-    private String currentMenuState = "ALL";
 
     // 단편/썰 전용 컴포넌트
     private JButton btnShortStoryLibrary;   //단편/썰 목록 버튼
@@ -75,7 +75,6 @@ public class BookShelfPage{
             if(!shortStoriesDir.exists()) shortStoriesDir.mkdirs();
             if(!parodiesDir.exists()) parodiesDir.mkdirs();
 
-            System.out.println("[시스템] 3대 보관 구역 폴더 무결성 검사 및 동기화 완료.");
         } catch(Exception e){
             System.out.println("디렉터리 선행 생성 실패: "+ e.getMessage());
         }
@@ -129,8 +128,8 @@ public class BookShelfPage{
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
             btn.setBackground(Color.WHITE);
-            btn.setForeground(new Color(80, 85, 95));
-            btn.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+            btn.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
+            btn.setFont(UiStyle.FONT_BOLD_13);
             btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
             //왼쪽 마진 패딩을 주어 글자가 아이콘 그래픽 우측으로 밀리도록 유도
@@ -151,9 +150,9 @@ public class BookShelfPage{
                     // 2. 버튼 텍스트 내용별 맞춤 고해상도 벡터 아이콘 개별 드로잉
                     JButton b = (JButton) c;
                     if(b.getForeground().getGreen() > 100){
-                        g2.setColor(new Color(0, 140, 140));    //선택 상태: 선명한 청록색 아이콘
+                        g2.setColor(UiStyle.COLOR_ACCENT);    //선택 상태: 선명한 청록색 아이콘
                     } else{
-                        g2.setColor(new Color(140, 145, 155));  //비선탤 상태: 차분한 회색 아이콘
+                        g2.setColor(UiStyle.COLOR_ICON_INACTIVE);  //비선탤 상태: 차분한 회색 아이콘
                     }
 
                     // 3. 버튼 텍스트 내용별 맞춤 고해상도 벡터 아이콘 개별 드로잉
@@ -203,9 +202,9 @@ public class BookShelfPage{
                         g2.setColor(c.getBackground());
                         g2.fillRect(17, 18, 14, 16);
                         if(b.getForeground().getGreen() > 100){
-                            g2.setColor(new Color(0, 140, 140));
+                            g2.setColor(UiStyle.COLOR_ACCENT);
                         } else{
-                            g2.setColor(new Color(140, 145, 155));
+                            g2.setColor(UiStyle.COLOR_ICON_INACTIVE);
                         }
                         g2.drawRoundRect(17, 18, 14, 16, 3, 3);
                         //종이 내부 줄무늬 텍스트 선 묘사
@@ -256,46 +255,30 @@ public class BookShelfPage{
         //메뉴 버튼 클릭 시 화면 리렌더링 및 하이라이트 배경색 스위칭 리스너를 결합
         btnMyLibrary.addActionListener(e -> {
             currentMenu = "내 서재";
-            btnMyLibrary.setBackground(new Color(230, 245, 245));   //옅은 청록색 하이라이트
-            btnMyLibrary.setForeground(new Color(0, 140, 160)); //청록색
+            selectMenuButton(menuButtons, btnMyLibrary);
 
-            btnShortStoryLibrary.setBackground(Color.WHITE);
-            btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
-
-            btnMyFavorites.setBackground(Color.WHITE); //초기화
-            btnMyFavorites.setForeground(new Color(80, 85, 95));
-
-            btnParodyLibrary.setBackground(Color.WHITE);
-            btnParodyLibrary.setForeground(new Color(80, 85, 95));
-
-            btnSettings.setBackground(Color.WHITE);
-            btnSettings.setForeground(new Color(80, 85, 95));
-
-            //내 서재 ㅁ[뉴로 들어오는 순간, 상단 정렬 필터를 자동으로 "최근 읽은 순"으로 강제 복귀
             sortCombo.setSelectedItem("최근 읽은 순");
-
-            //소설 목록 바둑판화면 카드를 정면 노출
             cardLayout.show(cardsContainer, "LIBRARY_CARD");
-            refreshLibrary();   //필터링 엔진 가동
+            refreshLibrary();
         });
 
         //좋아요 버튼 리스너
         btnMyFavorites.addActionListener(e -> {
             currentMenu = "좋아요";
-            btnMyFavorites.setBackground(new Color(230, 245, 245));     //옅은 청록색 하이라이트 통일
+            btnMyFavorites.setBackground(UiStyle.COLOR_MENU_HIGHLIGHT_BG);     //옅은 청록색 하이라이트 통일
             btnMyFavorites.setForeground(new Color(0, 140, 160));
 
             btnMyLibrary.setBackground(Color.WHITE);       //초기화
-            btnMyLibrary.setForeground(new Color(80, 85, 95));
+            btnMyLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnShortStoryLibrary.setBackground(Color.WHITE);
-            btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
+            btnShortStoryLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnParodyLibrary.setBackground(Color.WHITE);
-            btnParodyLibrary.setForeground(new Color(80, 85, 95));
+            btnParodyLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnSettings.setBackground(Color.WHITE);
-            btnSettings.setForeground(new Color(80, 85, 95));
+            btnSettings.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             //좋아요 메뉴로 들어오면 상단 정렬 피렅를 "좋아요 순"으로 자동 스위칭
             sortCombo.setSelectedItem("좋아요 순");
@@ -308,20 +291,20 @@ public class BookShelfPage{
         //환경 설정 버튼 리스너
         btnSettings.addActionListener(e -> {
             currentMenu = "환경 설정";
-            btnSettings.setBackground(new Color(230, 245, 245));        //옅은 청록색 하이라이트 통일
-            btnSettings.setForeground(new Color(0, 140, 140));
+            btnSettings.setBackground(UiStyle.COLOR_MENU_HIGHLIGHT_BG);        //옅은 청록색 하이라이트 통일
+            btnSettings.setForeground(UiStyle.COLOR_ACCENT);
 
             btnMyLibrary.setBackground(Color.WHITE);
-            btnMyLibrary.setForeground(new Color(80, 85, 95));
+            btnMyLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnShortStoryLibrary.setBackground(Color.WHITE);
-            btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
+            btnShortStoryLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnParodyLibrary.setBackground(Color.WHITE);
-            btnParodyLibrary.setForeground(new Color(80, 85, 95));
+            btnParodyLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnMyFavorites.setBackground(Color.WHITE);
-            btnMyFavorites.setForeground(new Color(80, 85, 95));
+            btnMyFavorites.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             //환경설정 UI 리팩토링 갱신 메서드 원격 호출
             updateSettingsPanel();
@@ -332,13 +315,13 @@ public class BookShelfPage{
 
         btnParodyLibrary.addActionListener(e -> {
             currentMenu = "패러디 서재";
-            btnParodyLibrary.setBackground(new Color(230, 245, 245));
+            btnParodyLibrary.setBackground(UiStyle.COLOR_MENU_HIGHLIGHT_BG);
             btnParodyLibrary.setForeground(new Color(0, 140, 160));
 
-            btnMyLibrary.setBackground(Color.WHITE); btnMyLibrary.setForeground(new Color(80, 85, 95));
-            btnMyFavorites.setBackground(Color.WHITE); btnMyFavorites.setForeground(new Color(80, 85, 95));
-            btnShortStoryLibrary.setBackground(Color.WHITE); btnShortStoryLibrary.setForeground(new Color(80, 85, 95));
-            btnSettings.setBackground(Color.WHITE); btnSettings.setForeground(new Color(80, 85, 95));
+            btnMyLibrary.setBackground(Color.WHITE); btnMyLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
+            btnMyFavorites.setBackground(Color.WHITE); btnMyFavorites.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
+            btnShortStoryLibrary.setBackground(Color.WHITE); btnShortStoryLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
+            btnSettings.setBackground(Color.WHITE); btnSettings.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             //독립 커스텀 패널 화면 노출 및 리프레시 엔진 구동
             cardLayout.show(cardsContainer, "PARODY_CARD");
@@ -348,20 +331,20 @@ public class BookShelfPage{
         //단편/썰 서재 버튼 리스너
         btnShortStoryLibrary.addActionListener(e -> {
             currentMenu = "단편/썰 서재";
-            btnShortStoryLibrary.setBackground((new Color(230, 245, 245)));
+            btnShortStoryLibrary.setBackground((UiStyle.COLOR_MENU_HIGHLIGHT_BG));
             btnShortStoryLibrary.setForeground(new Color(0, 140, 160));
 
             btnMyLibrary.setBackground(Color.WHITE);
-            btnMyLibrary.setForeground(new Color(80, 85, 95));
+            btnMyLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnMyFavorites.setBackground(Color.WHITE);
-            btnMyFavorites.setForeground(new Color(80, 85, 95));
+            btnMyFavorites.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnParodyLibrary.setBackground(Color.WHITE);
-            btnParodyLibrary.setForeground(new Color(80, 85, 95));
+            btnParodyLibrary.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             btnSettings.setBackground(Color.WHITE);
-            btnSettings.setForeground(new Color(80, 85, 95));
+            btnSettings.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
 
             //독립 커스텀 패널 화면 노출 및 렌더링 동기화 호출
             cardLayout.show(cardsContainer, "SHORT_STORY_CARD");
@@ -371,7 +354,7 @@ public class BookShelfPage{
 
         //현재 선택된 메뉴이므로 '내 서재' 강조
         btnMyLibrary.setBackground(new Color(230, 245, 240));
-        btnMyLibrary.setForeground(new Color(0, 140, 140));
+        btnMyLibrary.setForeground(UiStyle.COLOR_ACCENT);
 
         //왼쪽 메뉴 패널에 컴포넌트 조립
         sideMenuPanel.add(lblMenuTitle);
@@ -468,8 +451,8 @@ public class BookShelfPage{
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus){
                 JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 c.setBackground(Color.WHITE);
-                c.setForeground(new Color(0, 140, 140));
-                c.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                c.setForeground(UiStyle.COLOR_ACCENT);
+                c.setFont(UiStyle.FONT_PLAIN_12);
                 c.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                 return c;
             }
@@ -486,7 +469,7 @@ public class BookShelfPage{
                         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                         g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                         //청록색 꺽쇠 기호(V) 드로잉
-                        g2.setColor(new Color(0, 140, 140));
+                        g2.setColor(UiStyle.COLOR_ACCENT);
                         g2.drawLine(6, 13, 10, 17);
                         g2.drawLine(10, 17, 14, 13);
                         g2.dispose();
@@ -517,7 +500,7 @@ public class BookShelfPage{
                 super.paintComponent(g);
             }
         };
-        btnAddNovel.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnAddNovel.setFont(UiStyle.FONT_BOLD_12);
         btnAddNovel.setForeground(new Color(0, 160, 160));
         btnAddNovel.setFocusPainted(false);
         btnAddNovel.setBorderPainted(false);                //각진 기본 외곽선 제거
@@ -535,7 +518,7 @@ public class BookShelfPage{
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 //2. 테두리 드로잉(소프트 그레이)
-                g2.setColor(new Color(225, 228, 232));
+                g2.setColor(UiStyle.COLOR_BORDER_GRAY);
                 g2.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 12, 12);
 
                 g2.dispose();
@@ -554,7 +537,7 @@ public class BookShelfPage{
                 JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 c.setBackground(Color.WHITE);
                 c.setForeground(new Color(60, 65, 75)); // 선택 글자색 다크 차콜 그레이
-                c.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                c.setFont(UiStyle.FONT_PLAIN_12);
                 c.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                 return c;
             }
@@ -600,7 +583,7 @@ public class BookShelfPage{
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
 
                 //테두리 드로잉
-                g2.setColor(new Color(225, 228, 232));
+                g2.setColor(UiStyle.COLOR_BORDER_GRAY);
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
 
                 g2.dispose();
@@ -611,12 +594,12 @@ public class BookShelfPage{
         //내부 텍스트가 좌측 테두리에 너무 바짝 붙지 않도록 안쪽 공백 마진 패딩 배치
         searchField.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         searchField.setForeground(Color.GRAY);
-        searchField.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        searchField.setFont(UiStyle.FONT_PLAIN_12);
 
         JButton btnCancelSearch = new JButton("취소");
         btnCancelSearch.setPreferredSize(new Dimension(30, 30));
-        btnCancelSearch.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-        btnCancelSearch.setForeground(new Color(0, 140, 140));
+        btnCancelSearch.setFont(UiStyle.FONT_BOLD_12);
+        btnCancelSearch.setForeground(UiStyle.COLOR_ACCENT);
         btnCancelSearch.setFocusPainted(false);
         btnCancelSearch.setBorderPainted(false);
         btnCancelSearch.setContentAreaFilled(false);
@@ -716,15 +699,15 @@ public class BookShelfPage{
             JLabel lineLabel = new JLabel(infoLines[i]);
 
             if (i == 0) {
-                lineLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-                lineLabel.setForeground(new Color(0, 140, 140));
+                lineLabel.setFont(UiStyle.FONT_BOLD_13);
+                lineLabel.setForeground(UiStyle.COLOR_ACCENT);
             }
             else if (infoLines[i].contains("부분 일치")) {
-                lineLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+                lineLabel.setFont(UiStyle.FONT_PLAIN_11);
                 lineLabel.setForeground(new Color(130, 130, 130));
             }
             else {
-                lineLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                lineLabel.setFont(UiStyle.FONT_PLAIN_12);
                 lineLabel.setForeground(new Color(60, 60, 60));
             }
             tipContainer.add(lineLabel);
@@ -774,7 +757,7 @@ public class BookShelfPage{
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 //1. 배경을 은은하고 연한 청록색으로 채우기(모양은 알약 모양)
-                g2.setColor(new Color(230, 245, 245));
+                g2.setColor(UiStyle.COLOR_MENU_HIGHLIGHT_BG);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
 
                 g2.dispose();
@@ -782,7 +765,7 @@ public class BookShelfPage{
             }
         };
         lblTotalCounter.setFont(new Font("맑은 고딕", Font.BOLD, 11));
-        lblTotalCounter.setForeground(new Color(0, 140, 140)); // 청록색
+        lblTotalCounter.setForeground(UiStyle.COLOR_ACCENT); // 청록색
         lblTotalCounter.setOpaque(false);
         lblTotalCounter.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
 
@@ -806,10 +789,10 @@ public class BookShelfPage{
         toolbarPanel.add(rightButtonGroup, BorderLayout.EAST);
 
         //기본 JComboBox들의 각진 모서리와 내부 패딩을 마감 조정
-        platformCombo.setFont(new Font("맑은 고딕", Font.BOLD, 12));
-        platformCombo.setForeground(new Color(0, 140, 140));
+        platformCombo.setFont(UiStyle.FONT_BOLD_12);
+        platformCombo.setForeground(UiStyle.COLOR_ACCENT);
 
-        sortCombo.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        sortCombo.setFont(UiStyle.FONT_BOLD_12);
         sortCombo.setForeground(new Color(60, 65, 75));
 
         platformCombo.setPreferredSize(new Dimension(130, 32));
@@ -817,25 +800,25 @@ public class BookShelfPage{
 
         //4. [오른쪽 구역] 소설 카드들이 꽂힐 서재 본문 패널 생성
         libraryGridPanel = new JPanel();
-        libraryGridPanel.setBackground(new Color(248, 250, 252));
+        libraryGridPanel.setBackground(UiStyle.COLOR_BG_LIGHT);
 
         //바둑판 모양 레이아웃 설정 : 1줄에 3칸씩, 가로세로 가격 20픽셀
         libraryGridPanel.setLayout(new GridBagLayout());
 
         JPanel gridWrapper = new JPanel(new BorderLayout());
-        gridWrapper.setBackground(new Color(248, 250, 252));
+        gridWrapper.setBackground(UiStyle.COLOR_BG_LIGHT);
         gridWrapper.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 
         JPanel innerAlignPanel = new JPanel(new BorderLayout());
-        innerAlignPanel.setBackground(new Color(248, 250, 252));
+        innerAlignPanel.setBackground(UiStyle.COLOR_BG_LIGHT);
         innerAlignPanel.add(libraryGridPanel, BorderLayout.WEST);
 
         gridWrapper.add(innerAlignPanel, BorderLayout.NORTH);
 
         JScrollPane libraryScrollPane = new JScrollPane(gridWrapper);
 
-        libraryScrollPane.setBackground(new Color(248, 250, 252));
-        libraryScrollPane.getViewport().setBackground(new Color(248, 250, 252));
+        libraryScrollPane.setBackground(UiStyle.COLOR_BG_LIGHT);
+        libraryScrollPane.getViewport().setBackground(UiStyle.COLOR_BG_LIGHT);
         libraryScrollPane.setBorder(BorderFactory.createEmptyBorder());
 
         libraryScrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -966,7 +949,7 @@ public class BookShelfPage{
         //좌측 ⓘ 문양
         JLabel lblInfoIcon = new JLabel("ⓘ");
         lblInfoIcon.setFont(new Font("맑은 고딕", Font.BOLD, 15));
-        lblInfoIcon.setForeground(new Color(0, 140, 140));
+        lblInfoIcon.setForeground(UiStyle.COLOR_ACCENT);
 
         String installDateStr = AppSettings.getInstance().getInstallDate(); //설치일 로드
         long dayBetween = ChronoUnit.DAYS.between(
@@ -985,7 +968,7 @@ public class BookShelfPage{
 
         //[중앙 1층 메인 탭 패널 인프라 가동]
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        tabbedPane.setFont(UiStyle.FONT_BOLD_13);
         tabbedPane.setBackground(Color.WHITE);  //헤더 배경 화이트 스위칭
         tabbedPane.setOpaque(true);
 
@@ -1030,7 +1013,7 @@ public class BookShelfPage{
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                    g2.setColor(new Color(0, 140, 140));
+                    g2.setColor(UiStyle.COLOR_ACCENT);
 
                     int xStart = rects[tabIndex].x;
                     int yBottom = rects[tabIndex].y + rects[tabIndex].height - 4;
@@ -1047,7 +1030,7 @@ public class BookShelfPage{
                 g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
                 if (isSelected) {
-                    g2.setColor(new Color(0, 140, 140));
+                    g2.setColor(UiStyle.COLOR_ACCENT);
                     g2.setFont(font.deriveFont(Font.BOLD));
                 } else {
                     g2.setColor(new Color(60, 65, 75));
@@ -1067,8 +1050,8 @@ public class BookShelfPage{
         tabGeneral.setLayout(new BoxLayout(tabGeneral, BoxLayout.Y_AXIS));
         tabGeneral.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
 
-        Color themeCyan = new Color(0, 140, 140);
-        Color borderGray = new Color(225, 228, 232);
+        Color themeCyan = UiStyle.COLOR_ACCENT;
+        Color borderGray = UiStyle.COLOR_BORDER_GRAY;
 
         //[기본 설정] 패널
         JPanel baseSettingCard = new JPanel(){
@@ -1110,8 +1093,8 @@ public class BookShelfPage{
         rowTheme.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JLabel lblTheme = new JLabel("전체 기본 시작 테마 설정: ");
-        lblTheme.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-        lblTheme.setForeground(new Color(50, 55, 60));
+        lblTheme.setFont(UiStyle.FONT_PLAIN_13);
+        lblTheme.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblTheme.setPreferredSize(new Dimension(220, 30));
 
         String[] themes = {"흰색(화이트)", "베이지색", "검정색(블랙)"};
@@ -1130,7 +1113,7 @@ public class BookShelfPage{
             }
         };
         comboTheme.setSelectedItem(AppSettings.getInstance().getDefaultTheme());
-        comboTheme.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        comboTheme.setFont(UiStyle.FONT_PLAIN_12);
         comboTheme.setPreferredSize(new Dimension(160, 30));
         comboTheme.setOpaque(false);
         comboTheme.setBackground(Color.WHITE);
@@ -1147,7 +1130,7 @@ public class BookShelfPage{
                         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                         g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                        g2.setColor(new Color(0, 140, 140));
+                        g2.setColor(UiStyle.COLOR_ACCENT);
 
                         g2.drawLine(5, 13, 9, 17);
                         g2.drawLine(9, 17, 13, 13);
@@ -1166,7 +1149,7 @@ public class BookShelfPage{
                 JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 c.setBackground(Color.WHITE);
                 c.setForeground(new Color(60, 65, 75));
-                c.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                c.setFont(UiStyle.FONT_PLAIN_12);
                 c.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                 return c;
             }
@@ -1188,8 +1171,8 @@ public class BookShelfPage{
         rowFont.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
 
         JLabel lblFont = new JLabel("뷰어 기본 글꼴 및 크기 선행 지정: ");
-        lblFont.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-        lblFont.setForeground(new Color(50, 55, 60));
+        lblFont.setFont(UiStyle.FONT_PLAIN_13);
+        lblFont.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblFont.setPreferredSize(new Dimension(220, 30));
 
         String[] fontOptions = {"맑은 고딕", "나눔고딕", "바탕체", "돋움", "굴림"};
@@ -1208,7 +1191,7 @@ public class BookShelfPage{
             }
         };
         comboFont.setSelectedItem(tempFont[0]);
-        comboFont.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        comboFont.setFont(UiStyle.FONT_PLAIN_12);
         comboFont.setPreferredSize(new Dimension(160, 30));
         comboFont.setOpaque(false);
         comboFont.setBackground(Color.WHITE);
@@ -1244,7 +1227,7 @@ public class BookShelfPage{
                 JLabel c = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 c.setBackground(Color.WHITE);
                 c.setForeground(new Color(60, 65, 75));
-                c.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+                c.setFont(UiStyle.FONT_PLAIN_12);
                 c.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
                 return c;
             }
@@ -1252,7 +1235,7 @@ public class BookShelfPage{
 
         SpinnerModel spinnerModel = new SpinnerNumberModel(tempFontSize[0], 4, 40, 2);
         JSpinner spinnerSize = new JSpinner(spinnerModel);
-        spinnerSize.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        spinnerSize.setFont(UiStyle.FONT_BOLD_12);
         spinnerSize.setPreferredSize(new Dimension(65, 30));
         spinnerSize.setBorder(BorderFactory.createLineBorder(borderGray, 1, true));
 
@@ -1327,7 +1310,7 @@ public class BookShelfPage{
         nameRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lblPlatformName = new JLabel("플랫폼 이름");
-        lblPlatformName.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        lblPlatformName.setFont(UiStyle.FONT_PLAIN_13);
         lblPlatformName.setForeground(new Color(60, 65, 70));
         lblPlatformName.setPreferredSize(new Dimension(140, 30));
 
@@ -1345,7 +1328,7 @@ public class BookShelfPage{
             }
         };
         tfNewPlatform.setOpaque(false);
-        tfNewPlatform.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        tfNewPlatform.setFont(UiStyle.FONT_PLAIN_12);
         tfNewPlatform.setPreferredSize(new Dimension(260, 30));
         tfNewPlatform.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
 
@@ -1360,7 +1343,7 @@ public class BookShelfPage{
         iconRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lblPlatformIcon = new JLabel("플랫폼 로고 이미지");
-        lblPlatformIcon.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        lblPlatformIcon.setFont(UiStyle.FONT_PLAIN_13);
         lblPlatformIcon.setForeground(new Color(60, 65, 70));
         lblPlatformIcon.setPreferredSize(new Dimension(140, 30));
 
@@ -1379,7 +1362,7 @@ public class BookShelfPage{
         };
         tfIconPath.setOpaque(false);
         tfIconPath.setEditable(false);
-        tfIconPath.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        tfIconPath.setFont(UiStyle.FONT_PLAIN_11);
         tfIconPath.setPreferredSize(new Dimension(200, 30));
         tfIconPath.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
 
@@ -1396,7 +1379,7 @@ public class BookShelfPage{
                 super.paintComponent(g);
             }
         };
-        btnBrowseIcon.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnBrowseIcon.setFont(UiStyle.FONT_BOLD_12);
         btnBrowseIcon.setForeground(new Color(70, 80, 90));
         btnBrowseIcon.setContentAreaFilled(false);
         btnBrowseIcon.setBorderPainted(false);
@@ -1426,7 +1409,7 @@ public class BookShelfPage{
                 super.paintComponent(g);
             }
         };
-        lblPreview.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblPreview.setFont(UiStyle.FONT_PLAIN_11);
         lblPreview.setForeground(Color.LIGHT_GRAY);
 
         //미리보기 박스 크기
@@ -1456,7 +1439,7 @@ public class BookShelfPage{
                 super.paintComponent(g);
             }
         };
-        btnAddPlatform.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnAddPlatform.setFont(UiStyle.FONT_BOLD_12);
         btnAddPlatform.setForeground(Color.GRAY);
         btnAddPlatform.setFocusPainted(false);
         btnAddPlatform.setBorderPainted(false);     //외곽의 날카로운 기본 사각 테두리선 제거
@@ -1479,7 +1462,7 @@ public class BookShelfPage{
                 super.paintComponent(g);
             }
         };
-        btnDeletePlatform.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnDeletePlatform.setFont(UiStyle.FONT_BOLD_12);
         btnDeletePlatform.setForeground(new Color(210, 50, 50));
         btnDeletePlatform.setFocusPainted(false);
         btnDeletePlatform.setBorderPainted(false);
@@ -1497,8 +1480,8 @@ public class BookShelfPage{
 
         //[하단 가이드라인 라벨 신설]
         JLabel lblGuideNotice = new JLabel("※ 이름과 로고 이미지를 선택해야 등록할 수 있습니다.");
-        lblGuideNotice.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
-        lblGuideNotice.setForeground(new Color(140, 145, 155));
+        lblGuideNotice.setFont(UiStyle.FONT_PLAIN_11);
+        lblGuideNotice.setForeground(UiStyle.COLOR_ICON_INACTIVE);
 
         //GridBagLayout을 통한 요소들의 비율 도킹 공간 연산
         GridBagConstraints gbc = new GridBagConstraints();
@@ -1555,7 +1538,7 @@ public class BookShelfPage{
                 btnAddPlatform.setForeground(Color.GRAY);
                 btnAddPlatform.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
                 lblGuideNotice.setText("이름과 로고 이미지를 선택해야 등록할 수 있습니다.");
-                lblGuideNotice.setForeground(new Color(140, 145, 155));
+                lblGuideNotice.setForeground(UiStyle.COLOR_ICON_INACTIVE);
             }
         };
 
@@ -1634,7 +1617,7 @@ public class BookShelfPage{
 
         //[좌측 최하단]: 버튼 형태 탈피, 텍스트 링크 형태의 초기화 컴포넌트
         JButton btnClearLink = new JButton("전체 데이터 초기화");
-        btnClearLink.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        btnClearLink.setFont(UiStyle.FONT_PLAIN_12);
         btnClearLink.setForeground(themeCyan);
         btnClearLink.setFocusPainted(false);
         btnClearLink.setBorderPainted(false);
@@ -1689,7 +1672,7 @@ public class BookShelfPage{
             selectDialog.getContentPane().setBackground(Color.WHITE);
 
             JLabel lblMsg = new JLabel("어떤 서재의 데이터를 초기화하시겠습니까?", SwingConstants.CENTER);
-            lblMsg.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            lblMsg.setFont(UiStyle.FONT_BOLD_12);
             selectDialog.add(lblMsg);
 
             JButton btnDelMy = new JButton("내 서재");
@@ -1732,7 +1715,7 @@ public class BookShelfPage{
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 //배경색 칠하기
-                g2.setColor(new Color(0, 140, 140));
+                g2.setColor(UiStyle.COLOR_ACCENT);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);  //모서리 곡률 반지름 8
                 g2.dispose();
 
@@ -2060,61 +2043,59 @@ public class BookShelfPage{
 
         if(!novel.getCoverPath().isEmpty() && new File(novel.getCoverPath()).exists()){
             try{
-                //ImageIO를 사용하여 이미지를 동기식으로 로드
                 File coverFile = new File(novel.getCoverPath());
-                java.awt.image.BufferedImage srcImg = javax.imageio.ImageIO.read(coverFile);
+                //파일 경로+수정시각을 키로 사용 → 표지 파일이 바뀌면 자동으로 캐시 무효화됨
+                String cacheKey = coverFile.getAbsolutePath() + "_" + coverFile.lastModified();
+                ImageIcon cached = coverImageCache.get(cacheKey);
 
-                //2. 가로세로 비율 유지를 위한 정밀 좌표 연산(종횡비 보존)
-                int srcWidth = srcImg.getWidth(null);
-                int srcHeight = srcImg.getHeight(null);
+                if(cached != null){
+                    lblCover.setIcon(cached);
+                } else {
+                    java.awt.image.BufferedImage srcImg = javax.imageio.ImageIO.read(coverFile);
+                    int srcWidth = srcImg.getWidth(null);
+                    int srcHeight = srcImg.getHeight(null);
 
-                double targetScale = Math.max((double) targetWidth / srcWidth, (double) targetHeight / srcHeight);
-                int scaledWidth = (int) (srcWidth * targetScale);
-                int scaledHeight = (int) (srcHeight * targetScale);
+                    double targetScale = Math.max((double) targetWidth / srcWidth, (double) targetHeight / srcHeight);
+                    int scaledWidth = (int) (srcWidth * targetScale);
+                    int scaledHeight = (int) (srcHeight * targetScale);
 
-                //중앙 정렬을 위한 잘라내기 시작 좌표 도출
-                int x = (targetWidth - scaledWidth) / 2;
-                int y = (targetHeight - scaledHeight) / 2;
+                    //중앙 정렬을 위한 잘라내기 시작 좌표 도출
+                    int x = (targetWidth - scaledWidth) / 2;
+                    int y = (targetHeight - scaledHeight) / 2;
 
-                //3. 고화질 캔버스 준비 및 그래픽스 엔진 드로잉
-                java.awt.image.BufferedImage resizedImg = new java.awt.image.BufferedImage(
-                        targetWidth, targetHeight, java.awt.image.BufferedImage.TYPE_INT_ARGB
-                );
-                Graphics2D g2 = resizedImg.createGraphics();
+                    //3. 고화질 캔버스 준비 및 그래픽스 엔진 드로잉
+                    java.awt.image.BufferedImage resizedImg = new java.awt.image.BufferedImage(
+                            targetWidth, targetHeight, java.awt.image.BufferedImage.TYPE_INT_ARGB
+                    );
+                    Graphics2D g2 = resizedImg.createGraphics();
 
-                //초고화질 그래픽 렌더링 힌트 다중 주입
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    //초고화질 그래픽 렌더링 힌트 다중 주입
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // 표지 상단 모서리만 둥글게 클리핑 처리(하단은 그라데이션으로 덮이므로 여유 마진 부여)
-                g2.setClip(new RoundRectangle2D.Float(0, 0, targetWidth, targetHeight, 14, 14));
-                g2.drawImage(srcImg, x, y, scaledWidth, scaledHeight, null);
+                    // 표지 상단 모서리만 둥글게 클리핑 처리(하단은 그라데이션으로 덮이므로 여유 마진 부여)
+                    g2.setClip(new RoundRectangle2D.Float(0, 0, targetWidth, targetHeight, 14, 14));
+                    g2.drawImage(srcImg, x, y, scaledWidth, scaledHeight, null);
 
-                // 표지 하단에 자연스러운 그라데이션 페이드아웃 효과 적용
-                GradientPaint fade = new GradientPaint(
-                        0, targetHeight - 60, new Color(255, 255, 255, 0),  // 하단 60px 위부터 투명하게 시작
-                        0, targetHeight, Color.WHITE    //맨 밑바닥은 완전한 불투명 흰색
-                );
-                g2.setPaint(fade);
-                g2.fillRect(0, targetHeight - 60, targetWidth, 60);
+                    // 표지 하단에 자연스러운 그라데이션 페이드아웃 효과 적용
+                    GradientPaint fade = new GradientPaint(
+                            0, targetHeight - 60, new Color(255, 255, 255, 0),  // 하단 60px 위부터 투명하게 시작
+                            0, targetHeight, Color.WHITE    //맨 밑바닥은 완전한 불투명 흰색
+                    );
+                    g2.setPaint(fade);
+                    g2.fillRect(0, targetHeight - 60, targetWidth, 60);
 
-                g2.dispose();
+                    g2.dispose();
 
-                lblCover.setIcon(new ImageIcon(resizedImg));
+                    lblCover.setIcon(new ImageIcon(resizedImg));
+                    ImageIcon newIcon = new ImageIcon(resizedImg);
+                    coverImageCache.put(cacheKey, newIcon);
+                    lblCover.setIcon(newIcon);
+                }
             } catch(Exception e){
                 lblCover.setText("IMAGE ERROR");
             }
-        } else{
-            //이미지가 없으면 글자로 대체
-            lblCover.setText("NO COVER IMAGE");
-            lblCover.setFont(new Font("맑은 고딕", Font.BOLD, 10));
-            lblCover.setForeground(new Color(160, 170, 185));
-
-            //텍스트 문장이 책 아이콘 하단에 알맞게 배치되도록 수직 텍스트 위치 가이드 기조 하향
-            lblCover.setVerticalTextPosition(SwingConstants.BOTTOM);
-            lblCover.setHorizontalTextPosition(SwingConstants.CENTER);
-            lblCover.setIconTextGap(10);    //아이콘과 글자 사이의 안전 격리 마진
         }
 
         //이미지 상단 여백 제거
@@ -2136,7 +2117,7 @@ public class BookShelfPage{
         // 다중제목 <html> 태그를 활용하여 자동 줄바꿈
         String displayTitle = novel.getTitle();
         JLabel lblTitle = new JLabel("<html><body style='width: 160px; word-wrap: break-word; margin: 0; padding: 0; line-height: 1.1;'>" + displayTitle + "</body></html>");
-        lblTitle.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        lblTitle.setFont(UiStyle.FONT_BOLD_13);
         lblTitle.setForeground(new Color(30, 35, 40));
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -2156,7 +2137,7 @@ public class BookShelfPage{
         String genreStr = (novel.getGenre() == null || novel.getGenre().isEmpty() ? "미분류" : novel.getGenre());
         String authorStr = (novel.getAuthor() == null || novel.getAuthor().isEmpty() ? "작자미상" : novel.getAuthor());
         JLabel lblGenreAuthor = new JLabel(genreStr + "ㆍ" + authorStr);
-        lblGenreAuthor.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblGenreAuthor.setFont(UiStyle.FONT_PLAIN_11);
 
         lblGenreAuthor.setForeground(Color.LIGHT_GRAY);
         lblGenreAuthor.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -2243,12 +2224,12 @@ public class BookShelfPage{
 
         String progressStr = (currentCh >= totalCh) ? "완독 " + totalCh + "화" : "읽는 중 " + currentCh + " / " + totalCh + "화";
         JLabel lblProgressText = new JLabel(progressStr);
-        lblProgressText.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
+        lblProgressText.setFont(UiStyle.FONT_PLAIN_11);
         lblProgressText.setForeground(currentCh >= totalCh ? new Color(0, 160, 160) : new Color(120, 125, 130));
 
         JLabel lblPercent = new JLabel(percent + "%");
         lblPercent.setFont(new Font("맑은 고딕", Font.BOLD, 11));
-        lblPercent.setForeground(new Color(0, 140, 140));
+        lblPercent.setForeground(UiStyle.COLOR_ACCENT);
 
         progressTextRow.add(lblProgressText, BorderLayout.WEST);
         progressTextRow.add(lblPercent, BorderLayout.EAST);
@@ -2500,7 +2481,7 @@ public class BookShelfPage{
 
         //상단 타이틀 배너
         JLabel lblHeader = new JLabel("삭제할 플랫폼을 목록에서 선택하세요.", SwingConstants.CENTER);
-        lblHeader.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        lblHeader.setFont(UiStyle.FONT_BOLD_13);
         lblHeader.setBorder(BorderFactory.createEmptyBorder(15, 10, 5, 10));
         delDialog.add(lblHeader, BorderLayout.NORTH);
 
@@ -2513,7 +2494,7 @@ public class BookShelfPage{
 
         //스크롤이 지원되는 리스트 컴포넌트
         JList<String> platformJList = new JList<>(listModel);
-        platformJList.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        platformJList.setFont(UiStyle.FONT_PLAIN_13);
 
         //다중 선택 모드(여러 플랫폼을 동시에 체크 가능)
         platformJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -2525,7 +2506,7 @@ public class BookShelfPage{
                 JLabel lblIcon = new JLabel();
                 JLabel lblText = new JLabel(value);
 
-                lblText.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+                lblText.setFont(UiStyle.FONT_PLAIN_13);
 
                 if(isSelected){
                     //선택 시 배경색이 어두워지고 기호가 검은 네모로 채워짐
@@ -2598,14 +2579,14 @@ public class BookShelfPage{
         bottomButtonPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(230, 235, 240)));
 
         JButton btnSubmitDelete = new JButton("선택 항목 영구 삭제");
-        btnSubmitDelete.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnSubmitDelete.setFont(UiStyle.FONT_BOLD_12);
         btnSubmitDelete.setBackground(new Color(255, 230, 230));
         btnSubmitDelete.setForeground(Color.RED);
         btnSubmitDelete.setFocusPainted(false);
         btnSubmitDelete.setPreferredSize(new Dimension(140, 30));
 
         JButton btnClosingDialog = new JButton("취소");
-        btnClosingDialog.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        btnClosingDialog.setFont(UiStyle.FONT_PLAIN_12);
         btnClosingDialog.setBackground(Color.WHITE);
         btnClosingDialog.setFocusPainted(false);
         btnClosingDialog.setPreferredSize(new Dimension(80, 30));
@@ -2718,13 +2699,13 @@ public class BookShelfPage{
                 //현재 선태된 탭을 경우 하단에 청록색 밑줄 드로잉
                 if(getText().startsWith(currentStatusTab + " (")){
                     Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setColor(new Color(0, 140, 140));
+                    g2.setColor(UiStyle.COLOR_ACCENT);
                     g2.fillRect(0, getHeight()-2, getWidth(), 2);
                     g2.dispose();
                 }
             }
         };
-        btn.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btn.setFont(UiStyle.FONT_BOLD_12);
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setContentAreaFilled(false);
@@ -2739,14 +2720,26 @@ public class BookShelfPage{
         return btn;
     }
 
+    private void selectMenuButton(JButton[] allMenuButtons, JButton selected){
+        for(JButton btn : allMenuButtons){
+            if(btn == selected){
+                btn.setBackground(UiStyle.COLOR_MENU_HIGHLIGHT_BG);
+                btn.setForeground(UiStyle.COLOR_ACCENT);
+            } else {
+                btn.setBackground(Color.WHITE);
+                btn.setForeground(UiStyle.COLOR_TEXT_INACTIVE);
+            }
+        }
+    }
+
     private void updateTabStyles(){
         if(btnTabAll == null) return;
         JButton[] tabs = {btnTabAll, btnTabOngoing, btnTabCompleted, btnTabHiatus};
         for(JButton btn : tabs){
             if(btn.getText().startsWith(currentStatusTab + " (")){
-                btn.setForeground(new Color(0, 140, 140));
+                btn.setForeground(UiStyle.COLOR_ACCENT);
             } else{
-                btn.setForeground(new Color(140, 145, 155));
+                btn.setForeground(UiStyle.COLOR_ICON_INACTIVE);
             }
             btn.repaint();
         }

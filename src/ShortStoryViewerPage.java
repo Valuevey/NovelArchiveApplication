@@ -87,7 +87,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         searchField = new JTextField(15);
         searchStatusLabel = new JLabel("0/0");
-        searchStatusLabel.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        searchStatusLabel.setFont(UiStyle.FONT_BOLD_12);
 
         JButton btnPrevSearch = new JButton("▲")    ;
         JButton btnNextSearch = new JButton("▼");
@@ -95,7 +95,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         JButton[] sBtns = {btnPrevSearch, btnNextSearch, btnCloseSearch};
         for(JButton b : sBtns){
-            b.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            b.setFont(UiStyle.FONT_BOLD_12);
             b.setFocusPainted(false);
             b.setContentAreaFilled(false);
             b.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -429,6 +429,21 @@ public class ShortStoryViewerPage extends JFrame{
         searchStatusLabel.setText((currentSearchIndex + 1) + "/" + searchResults.size());
     }
 
+    //즐겨찾기 파일을 한 번만 읽어서 절대경로 Set으로 변환하는 헬퍼 (목록 렌더링 전용)
+    private java.util.Set<String> loadFavoritePathSet(){
+        java.util.Set<String> favSet = new java.util.HashSet<>();
+        File favFile = new File(GLOBAL_FAV_FILE);
+        if(favFile.exists()){
+            try(BufferedReader br = new BufferedReader(new FileReader(favFile))){
+                String line;
+                while((line = br.readLine()) != null){
+                    String[] parts = line.split("\\|");
+                    if(parts.length > 0) favSet.add(parts[0]);
+                }
+            } catch(Exception e){}
+        }
+        return favSet;
+    }
 
     //즐겨찾기(별모양) 렌더링 헬퍼 구역
     private boolean isFavorite(File f){
@@ -548,7 +563,7 @@ public class ShortStoryViewerPage extends JFrame{
         //왼쪽 경로 표기 레이블
         String originName = (targetTextFile != null) ? targetTextFile.getParentFile().getParentFile().getName() : "원작";
         JLabel lblLeft = new JLabel(" ← " + originName + " 2차  |  2차: " + originName);
-        lblLeft.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        lblLeft.setFont(UiStyle.FONT_PLAIN_12);
         lblLeft.setForeground(Color.GRAY);
 
         //우측 도구 제어 그룹
@@ -661,7 +676,7 @@ public class ShortStoryViewerPage extends JFrame{
         }
 
         JLabel lblTotalCount = new JLabel("전체 " + list.size() + "개");
-        lblTotalCount.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        lblTotalCount.setFont(UiStyle.FONT_PLAIN_12);
         lblTotalCount.setForeground(Color.GRAY);
         listHeader.add(lblTotalCount, BorderLayout.EAST);
 
@@ -672,8 +687,9 @@ public class ShortStoryViewerPage extends JFrame{
         listContent.setLayout(new BoxLayout(listContent, BoxLayout.Y_AXIS));
         listContent.setBackground(Color.WHITE);
 
+        java.util.Set<String> favoritePaths = loadFavoritePathSet();   //목록 그리기 전 딱 한 번만 읽어서 캐싱
         for(File f : list){
-            listContent.add(createChapterRowPanel(f));
+            listContent.add(createChapterRowPanel(f, favoritePaths));
             listContent.add(Box.createVerticalStrut(0));
         }
 
@@ -734,9 +750,9 @@ public class ShortStoryViewerPage extends JFrame{
     }
 
     // 모던 리스트의 각 행(row) 컴포넌트를 생성하는 독립 엔진
-    private JPanel createChapterRowPanel(File f){
+    private JPanel createChapterRowPanel(File f, java.util.Set<String> favoritePaths){
         boolean isCurrent = f.equals(targetTextFile);
-        boolean isFav = isFavorite(f);
+        boolean isFav = favoritePaths.contains(f.getAbsolutePath());   //파일 재탐색 없이 즉시 조회isFavorite(File f)
 
         JPanel row = new JPanel(new BorderLayout(10, 0)){
             private boolean hovered = false;
@@ -879,7 +895,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         // 3. 부제목 라인
         lblSubTitle = new JLabel();
-        lblSubTitle.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        lblSubTitle.setFont(UiStyle.FONT_PLAIN_12);
         lblSubTitle.setForeground(new Color(110, 115, 120));
         lblSubTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -890,12 +906,12 @@ public class ShortStoryViewerPage extends JFrame{
 
         // 4. 작가 닉네임 레이블
         lblAuthor = new JLabel();
-        lblAuthor.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        lblAuthor.setFont(UiStyle.FONT_BOLD_12);
         lblAuthor.setForeground(new Color(40, 40, 40));
 
         lblMetaStats = new JLabel();
-        lblMetaStats.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-        lblMetaStats.setForeground(new Color(140, 145, 155));
+        lblMetaStats.setFont(UiStyle.FONT_PLAIN_13);
+        lblMetaStats.setForeground(UiStyle.COLOR_ICON_INACTIVE);
 
         infoRow.add(lblAuthor);
         infoRow.add(lblMetaStats);
@@ -1001,7 +1017,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         // 1. 좌측 [이전 화] 네비게이션 단추
         btnPrev = new JButton("< 이전 화");
-        btnPrev.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnPrev.setFont(UiStyle.FONT_BOLD_12);
         btnPrev.setForeground(Color.GRAY);
         btnPrev.setContentAreaFilled(false);
         btnPrev.setBorderPainted(false);
@@ -1017,7 +1033,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         // 2. 우측 [다음 화] 네비게이션 단추
         btnNext = new JButton("다음 화 >");
-        btnNext.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnNext.setFont(UiStyle.FONT_BOLD_12);
         btnNext.setForeground(Color.GRAY);
         btnNext.setContentAreaFilled(false);
         btnNext.setBorderPainted(false);
@@ -1041,7 +1057,7 @@ public class ShortStoryViewerPage extends JFrame{
         progressSlider.setPreferredSize(new Dimension(450, 30));
         progressSlider.setMaximumSize(new Dimension(450, 30));
 
-        Color themeCyan = new Color(0, 140, 140);
+        Color themeCyan = UiStyle.COLOR_ACCENT;
         Color trackGray = new Color(225, 228, 230);
 
         progressSlider.setUI(new javax.swing.plaf.basic.BasicSliderUI(progressSlider){
@@ -1096,7 +1112,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         // 4. 슬라이더 우측에 퍼센트 수치를 표기해 줄 미니 레이블
         statusLabel = new JLabel("0%", JLabel.CENTER);
-        statusLabel.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        statusLabel.setFont(UiStyle.FONT_BOLD_12);
         statusLabel.setPreferredSize(new Dimension(45, 30));
 
         // 배치 균형을 유지하기 위한 그룹 배치 패널 조립
@@ -1145,7 +1161,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         if(typeText.equals("단편")) {
             lblBadge.setBackground(new Color(235, 247, 245));
-            lblBadge.setForeground(new Color(0, 140, 140));
+            lblBadge.setForeground(UiStyle.COLOR_ACCENT);
         } else if(typeText.equals("썰")) {
             lblBadge.setBackground(new Color(225, 240, 225));
             lblBadge.setForeground(new Color(235, 110, 20));
@@ -1226,7 +1242,7 @@ public class ShortStoryViewerPage extends JFrame{
         final Color backupBg = currentBgColor;
         final Color backupFg = currentFgColor;
 
-        Color themeCyan = new Color(0, 140, 140);
+        Color themeCyan = UiStyle.COLOR_ACCENT;
         Color borderGray = new Color(215, 222, 228);
         Color lineCyan = new Color(200, 225, 225);  //연한 청록색 점선용 컬러
 
@@ -1260,7 +1276,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         JLabel lblSizeTitle = new JLabel("글자 크기");
         lblSizeTitle.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        lblSizeTitle.setForeground(new Color(50, 55, 60));
+        lblSizeTitle.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblSizeTitle.setPreferredSize(new Dimension(140, 40));
         sizeRow.add(lblSizeTitle);
 
@@ -1290,7 +1306,7 @@ public class ShortStoryViewerPage extends JFrame{
         //중앙 숫자 입력 텍스트 필드 생성
         JTextField tfSizeInput = new JTextField(String.valueOf(currentFontSize), 3);
         tfSizeInput.setHorizontalAlignment(JTextField.CENTER);
-        tfSizeInput.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        tfSizeInput.setFont(UiStyle.FONT_PLAIN_13);
         tfSizeInput.setForeground(themeCyan);
         tfSizeInput.setPreferredSize(new Dimension(55, 32));
         tfSizeInput.setBorder(BorderFactory.createCompoundBorder(
@@ -1336,14 +1352,14 @@ public class ShortStoryViewerPage extends JFrame{
 
         JLabel lblFontTitle = new JLabel("글꼴 선택");
         lblFontTitle.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        lblFontTitle.setForeground(new Color(50, 55, 60));
+        lblFontTitle.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblFontTitle.setPreferredSize(new Dimension(140, 45));
         fontRow.add(lblFontTitle);
 
         String[] fonts = {"맑은 고딕", "나눔고딕", "바탕체", "돋움", "굴림"};
         JComboBox<String> fontComboBox = new JComboBox<>(fonts);
         fontComboBox.setSelectedItem(currentFontName);  //현재 지정 중인 폰트명이 자동 포커싱되도록 유도
-        fontComboBox.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        fontComboBox.setFont(UiStyle.FONT_PLAIN_13);
         fontComboBox.setPreferredSize(new Dimension(198, 32));
 
         fontComboBox.setBackground(Color.WHITE);
@@ -1371,7 +1387,7 @@ public class ShortStoryViewerPage extends JFrame{
 
         JLabel lblThemeTitle = new JLabel("색상 테마");
         lblThemeTitle.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        lblThemeTitle.setForeground(new Color(50, 55, 60));
+        lblThemeTitle.setForeground(UiStyle.COLOR_LABEL_TEXT);
         lblThemeTitle.setPreferredSize(new Dimension(140, 45));
         themeRow.add(lblThemeTitle);
 
@@ -1382,7 +1398,7 @@ public class ShortStoryViewerPage extends JFrame{
         JButton[] themeButtons = {btnThemeWhite, btnThemeSepia, btnThemeDark};
         for(JButton btn : themeButtons){
             btn.setPreferredSize(new Dimension(70, 32));
-            btn.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+            btn.setFont(UiStyle.FONT_BOLD_12);
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
             btn.setContentAreaFilled(false);
@@ -1392,9 +1408,9 @@ public class ShortStoryViewerPage extends JFrame{
         //각 테마 버튼에 고유한 배경/글자색 주입, 선택시 청록색 테두리
         java.util.function.Consumer<String> refreshThemeButtonStyles = (activeTheme) -> {
             // 1. 선택된 활성화 상태에 따른 글자(Foreground) 색상 동적 매핑
-            btnThemeWhite.setForeground(activeTheme.equals("흰색") ? new Color(33, 33, 33) : new Color(140, 145, 155));
+            btnThemeWhite.setForeground(activeTheme.equals("흰색") ? new Color(33, 33, 33) : UiStyle.COLOR_ICON_INACTIVE);
             btnThemeSepia.setForeground(activeTheme.equals("베이지") ? new Color(60, 52, 44) : new Color(120, 125, 135));
-            btnThemeDark.setForeground(activeTheme.equals("검정") ? Color.WHITE : new Color(140, 145, 155));
+            btnThemeDark.setForeground(activeTheme.equals("검정") ? Color.WHITE : UiStyle.COLOR_ICON_INACTIVE);
 
             btnThemeWhite.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
                 @Override public void paint(Graphics g, JComponent c) {
@@ -1448,7 +1464,7 @@ public class ShortStoryViewerPage extends JFrame{
 
                     g2.dispose();
 
-                    g.setColor(activeTheme.equals("검정") ? Color.WHITE : new Color(140, 145, 155));
+                    g.setColor(activeTheme.equals("검정") ? Color.WHITE : UiStyle.COLOR_ICON_INACTIVE);
                     super.paint(g, c);
                 }
             });
@@ -1484,7 +1500,7 @@ public class ShortStoryViewerPage extends JFrame{
         JButton[] bottomBtns = {btnCancel, btnConfirm};
         for(JButton btn : bottomBtns){
             btn.setPreferredSize(new Dimension(80, 32));
-            btn.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+            btn.setFont(UiStyle.FONT_BOLD_13);
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
             btn.setContentAreaFilled(false);

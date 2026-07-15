@@ -15,8 +15,8 @@ public class AddShortStoryDialog extends JDialog {
     private JComboBox<String> comboPlatform;    //플랫폼 선택용(AppSettings 연동)
 
     private Snippet resultSnippet = null;
-    private Color themeCyan = new Color(0, 140, 140);   //청록색
-    private Color borderGray = new Color(225, 228, 232);
+    private Color themeCyan = UiStyle.COLOR_ACCENT;   //청록색
+    private Color borderGray = UiStyle.COLOR_BORDER_GRAY;
 
     public AddShortStoryDialog(Window parent){
         super(parent, "새 단편/썰 등록", ModalityType.APPLICATION_MODAL);
@@ -54,8 +54,8 @@ public class AddShortStoryDialog extends JDialog {
         JPanel typeWrapper = new JPanel(new BorderLayout(0, 5));
         typeWrapper.setBackground(Color.WHITE);
         JLabel lblType = new JLabel("콘텐츠 유형");
-        lblType.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblType.setForeground(new Color(50, 55, 60));
+        lblType.setFont(UiStyle.FONT_BOLD_13);
+        lblType.setForeground(UiStyle.COLOR_LABEL_TEXT);
         comboType = new JComboBox<>(new String[]{"단편", "썰", "연작"});
         styleComboBox(comboType);
         typeWrapper.add(lblType, BorderLayout.NORTH);
@@ -65,8 +65,8 @@ public class AddShortStoryDialog extends JDialog {
         JPanel platformWrapper = new JPanel(new BorderLayout(0, 5));
         platformWrapper.setBackground(Color.WHITE);
         JLabel lblPlatform = new JLabel("출처 플랫폼");
-        lblPlatform.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblPlatform.setForeground(new Color(50, 55, 60));
+        lblPlatform.setFont(UiStyle.FONT_BOLD_13);
+        lblPlatform.setForeground(UiStyle.COLOR_LABEL_TEXT);
 
         ArrayList<String> platforms = AppSettings.getInstance().getCustomPlatforms();
         comboPlatform = new JComboBox<>(platforms.toArray(new String[0]));
@@ -89,10 +89,10 @@ public class AddShortStoryDialog extends JDialog {
         rowDescPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         rowDescPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
         JLabel lblDesc = new JLabel("작품 요약 및 주석 메모");
-        lblDesc.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblDesc.setForeground(new Color(50, 55, 60));
+        lblDesc.setFont(UiStyle.FONT_BOLD_13);
+        lblDesc.setForeground(UiStyle.COLOR_LABEL_TEXT);
         taDescription = new JTextArea();
-        taDescription.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        taDescription.setFont(UiStyle.FONT_PLAIN_12);
         taDescription.setLineWrap(true);
         JScrollPane descScroll = new JScrollPane(taDescription){
             @Override
@@ -124,8 +124,8 @@ public class AddShortStoryDialog extends JDialog {
         rowFolderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         rowFolderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
         JLabel lblFolder = new JLabel("텍스트 파일 보관 폴더 경로 *");
-        lblFolder.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        lblFolder.setForeground(new Color(50, 55, 60));
+        lblFolder.setFont(UiStyle.FONT_BOLD_13);
+        lblFolder.setForeground(UiStyle.COLOR_LABEL_TEXT);
 
         JPanel folderInputGroup = new JPanel(new BorderLayout(8, 0));
         folderInputGroup.setOpaque(false);
@@ -149,7 +149,7 @@ public class AddShortStoryDialog extends JDialog {
                 super.paintComponent(g);
             }
         };
-        btnBrowse.setFont(new Font("맑은 고딕", Font.BOLD, 12));
+        btnBrowse.setFont(UiStyle.FONT_BOLD_12);
         btnBrowse.setForeground(themeCyan);
         btnBrowse.setContentAreaFilled(false);
         btnBrowse.setBorderPainted(false);
@@ -206,7 +206,7 @@ public class AddShortStoryDialog extends JDialog {
                 super.paintComponent(g);
             }
         };
-        btnCancel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        btnCancel.setFont(UiStyle.FONT_BOLD_13);
         btnCancel.setForeground(themeCyan);
         btnCancel.setContentAreaFilled(false);
         btnCancel.setBorderPainted(false);
@@ -225,7 +225,7 @@ public class AddShortStoryDialog extends JDialog {
                 super.paintComponent(g);
             }
         };
-        btnSave.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        btnSave.setFont(UiStyle.FONT_BOLD_13);
         btnSave.setForeground(Color.WHITE);
         btnSave.setContentAreaFilled(false);
         btnSave.setBorderPainted(false);
@@ -295,7 +295,7 @@ public class AddShortStoryDialog extends JDialog {
             }
         };
         tf.setOpaque(false);
-        tf.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        tf.setFont(UiStyle.FONT_PLAIN_12);
         tf.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
         return tf;
     }
@@ -307,8 +307,8 @@ public class AddShortStoryDialog extends JDialog {
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
 
         JLabel label = new JLabel(title);
-        label.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-        label.setForeground(new Color(50, 55, 60));
+        label.setFont(UiStyle.FONT_BOLD_13);
+        label.setForeground(UiStyle.COLOR_LABEL_TEXT);
 
         textField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 32));
 
@@ -318,7 +318,7 @@ public class AddShortStoryDialog extends JDialog {
     }
 
     private void styleComboBox(JComboBox<String> combo){
-        combo.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        combo.setFont(UiStyle.FONT_PLAIN_12);
         combo.setBackground(Color.WHITE);
         combo.setPreferredSize(new Dimension(combo.getPreferredSize().width, 32));
     }
